@@ -1,57 +1,51 @@
 services:
-# sql server
   mysql:
-    image: mysql
+    image: mysql:8
     restart: unless-stopped
     volumes:
       - ./SQL Database/init.sql:/docker-entrypoint-initdb.d/0.sql
     ports:
-      - 3306:3306
+      - "3306:3306"
     expose:
-      - 3306
+      - "3306"
     environment:
       MYSQL_DATABASE: restaurant
       MYSQL_USER: admin
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_PASSWORD : admin
+      MYSQL_PASSWORD: 09022005      
+      MYSQL_ROOT_PASSWORD: 09022005
     networks:
       - restaurantnet
-# backend application
+
   backend:
-    image: backend
     build:
       context: Backend
       dockerfile: ./Dockerfile
+    image: backend
     environment:
-      NODE_ENV: stagging
+      NODE_ENV: staging
     ports:
-      - 3000:3000
+      - "3000:3000"
     expose:
-      - 3000
+      - "3000"
     depends_on:
       - mysql
     networks:
       - restaurantnet
 
-
-
-# frontend application 
   frontend:
-    image: frontend
     build:
       context: Frontend
       dockerfile: ./Dockerfile
+    image: frontend
     environment:
       NODE_ENV: staging
     ports:
-      - 8080:8080
+      - "8080:8080"
     expose:
-      - 8080
+      - "8080"
     networks:
       - restaurantnet
 
-
-# network bridge for communication between 3 containers 
 networks:
   restaurantnet:
-    driver: bridge 
+    driver: bridge
