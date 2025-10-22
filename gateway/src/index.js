@@ -2,9 +2,9 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const serviceRegistry = require('./config/serviceRegistry');
+const rateLimiter = require('./middleware/rateLimiter')
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,12 +15,21 @@ app.use(cors());
 app.use(express.json());
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+app.use(rateLimiter);
+
+// Root route (must be placed before proxy middlewares) =====
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'API Gateway is running successfully!',
+    available_routes: {
+      orders: '/api/orders',
+      menus: '/api/menu',
+      health: '/health'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
-app.use(limiter);
+
 
 // Health check
 app.get('/health', (req, res) => {
@@ -36,6 +45,7 @@ app.get('/health/services', async (req, res) => {
   const healthChecks = await Promise.allSettled(
     Object.entries(serviceRegistry).map(async ([name, config]) => {
       const response = await fetch(`${config.url}/health`);
+      // console.log(`${config.url}/health`);
       return { service: name, status: response.ok ? 'UP' : 'DOWN' };
     })
   );
@@ -49,7 +59,9 @@ app.get('/health/services', async (req, res) => {
 });
 
 // Proxy to Order Service
-app.use('/api/orders', createProxyMiddleware({
+app.use(
+  '/api/orders', 
+  createProxyMiddleware({
   target: serviceRegistry.orderService.url,
   changeOrigin: true,
   pathRewrite: {
@@ -65,7 +77,9 @@ app.use('/api/orders', createProxyMiddleware({
 }));
 
 // Proxy to Menu Service
-app.use('/api/menu', createProxyMiddleware({
+app.use(
+  '/api/menu', 
+  createProxyMiddleware({
   target: serviceRegistry.menuService.url,
   changeOrigin: true,
   pathRewrite: {
@@ -80,14 +94,14 @@ app.use('/api/menu', createProxyMiddleware({
   }
 }));
 
-// Backward compatibility - old endpoint
-app.post('/placeorder', createProxyMiddleware({
-  target: serviceRegistry.orderService.url,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/placeorder': '/api/orders'
-  }
-}));
+// // Backward compatibility - old endpoint
+// app.post('/placeorder', createProxyMiddleware({
+//   target: serviceRegistry.orderService.url,
+//   changeOrigin: true,
+//   pathRewrite: {
+//     '^/placeorder': '/api/orders'
+//   }
+// }));
 
 // 404 handler
 app.use((req, res) => {
@@ -104,6 +118,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`API Gateway listening on port ${PORT}`);
+  console.log(`API Gateway listening on port: http://localhost:${PORT}`);
   console.log('Registered services:', Object.keys(serviceRegistry));
 });
