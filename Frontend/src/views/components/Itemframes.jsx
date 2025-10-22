@@ -18,7 +18,7 @@ const ItemFrames = ({ addToCart }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       {items.map((item, index) => (
         <div key={index} className="menu-item bg-white shadow-lg rounded-lg p-4 transform transition duration-300 hover:scale-105 hover:shadow-xl">
           <img src={item.image} alt={item.name} className="w-full h-40 object-cover rounded-t-lg" />
