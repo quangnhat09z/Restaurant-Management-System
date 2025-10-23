@@ -1,7 +1,9 @@
-// gateway/src/config/serviceRegistry.js
+// ===================================
+// gateway/src/config/serviceRegistry.js (FIXED)
+// ===================================
 module.exports = {
   orderService: {
-    url: process.env.ORDER_SERVICE_URL || 'http://localhost:3001/api/orders',
+    url: process.env.ORDER_SERVICE_URL || 'http://localhost:3001',
     name: 'Order Service',
     healthCheck: '/health'
   },
