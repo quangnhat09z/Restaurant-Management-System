@@ -5,8 +5,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const orderRoutes = require('./routes/orderRoutes');
-const errorHandler = require('./utils/errorHandler');
+const orderRoutes = require('./order-service/src/routes/orderRoutes');
+const menuRoutes= require('./menu-service/src/routes/menuRoutes');
+const errorHandler = require('./order-service/src/utils/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,6 +19,11 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // Routes
+
+// menu
+app.use('/api/menu', menuRoutes);
+
+// order
 app.use('/api/orders', orderRoutes);
 
 // Health check
@@ -41,4 +47,6 @@ app.listen(PORT, () => {
   console.log(`✅ Order Service running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 Orders API: http://localhost:${PORT}/api/orders`);
+  console.log(`🔗 Menu API: http://localhost:${PORT}/api/menu`);
+  console.log(`----------------`)
 });
