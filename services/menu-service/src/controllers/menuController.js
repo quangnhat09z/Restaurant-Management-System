@@ -12,6 +12,8 @@ exports.getAllMenu = async (req, res) => {
 
 exports.getMenuById = async (req, res) => {
   try {
+    console.log('Da chay den day');
+    console.log(req.params);
     const menu = await menuService.getMenuById(req.params.id);
     if (!menu) return res.status(404).json({ message: 'Menu not found' });
     res.json(menu);
