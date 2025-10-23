@@ -1,4 +1,5 @@
 // Chay file nay sau khi tao database nhe
+// cd den folder menu-db, sau do chay node insert_menu.js
 const fs = require('fs');
 const mysql = require('mysql2/promise');
 
