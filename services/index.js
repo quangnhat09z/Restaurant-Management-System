@@ -21,10 +21,10 @@ app.use(morgan('dev'));
 // Routes
 
 // menu
-app.use('/api/menu', menuRoutes);
+app.use('/menu', menuRoutes);
 
 // order
-app.use('/api/orders', orderRoutes);
+app.use('/orders', orderRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -46,7 +46,7 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`✅ Order Service running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Orders API: http://localhost:${PORT}/api/orders`);
-  console.log(`🔗 Menu API: http://localhost:${PORT}/api/menu`);
+  console.log(`🔗 Orders API: http://localhost:${PORT}orders`);
+  console.log(`🔗 Menu API: http://localhost:${PORT}menu`);
   console.log(`----------------`)
 });
