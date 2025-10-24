@@ -1,16 +1,17 @@
-const express = require('express')
-const router= express.Router();
-const MenuController= require('../controllers/menuController');
+const express = require('express');
+const router = express.Router();
+const MenuController = require('../controllers/menuController');
 
 
+
+router.get('/filter', MenuController.filterMenus);
 // http://localhost:3002/api/menu/
 router.get('/', MenuController.getAllMenu);
-
 
 //Admin sau se lam xac thuc o day
 
 // http://localhost:3002/api/menu/1
-router.get('/:id',MenuController.getMenuById);
+router.get('/:id', MenuController.getMenuById);
 
 //http://localhost:3002/api/menu/1
 // {
@@ -19,7 +20,7 @@ router.get('/:id',MenuController.getMenuById);
 router.put('/:id', MenuController.updateMenu);
 
 // http://localhost:3002/api/menu/51
-router.delete('/:id',MenuController.deleteMenu);
+router.delete('/:id', MenuController.deleteMenu);
 
 // http://localhost:3002/api/menu/
 // {
@@ -40,10 +41,9 @@ router.delete('/:id',MenuController.deleteMenu);
 //   "mealType": ["Lunch"],
 //   "price": 60000
 // }
-router.post('/',MenuController.createMenu)
+router.post('/', MenuController.createMenu);
 
 
 
 
-
-module.exports= router;
+module.exports = router;

@@ -68,3 +68,21 @@ exports.deleteMenu = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.filterMenus = async (req, res) => {
+  try {
+    const filters = req.query;
+    const results = await menuService.filterMenus(filters);
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No matching menus found' });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error filtering menus:', error);
+    res.status(500).json({ error: 'Failed to filter menus' });
+  }
+};
+
+

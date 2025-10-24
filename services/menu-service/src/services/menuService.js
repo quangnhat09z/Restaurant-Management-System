@@ -102,7 +102,43 @@ async function deleteMenu(id) {
   await pool.query('DELETE FROM recipes WHERE id = ?', [id]);
 }
 
+async function filterMenus(filters) {
+  let query = 'SELECT * FROM recipes WHERE 1=1';
+  const values = [];
 
+  for (const [key, value] of Object.entries(filters)) {
+    if (['page', 'limit'].includes(key)) continue;
+
+    // Nếu muốn tìm theo substring (contains) mặc định cho các field text
+    if (['name', 'cuisine', 'difficulty'].includes(key)) {
+      query += ` AND ${key} LIKE ?`;
+      values.push(`%${value}%`);
+    } else if (key.endsWith('_gte')) {
+      const field = key.replace('_gte', '');
+      query += ` AND ${field} >= ?`;
+      values.push(value);
+    } else if (key.endsWith('_lte')) {
+      const field = key.replace('_lte', '');
+      query += ` AND ${field} <= ?`;
+      values.push(value);
+    } else if (key.endsWith('_gt')) {
+      const field = key.replace('_gt', '');
+      query += ` AND ${field} > ?`;
+      values.push(value);
+    } else if (key.endsWith('_lt')) {
+      const field = key.replace('_lt', '');
+      query += ` AND ${field} < ?`;
+      values.push(value);
+    } else {
+      // So sánh bằng cho các field khác
+      query += ` AND ${key} = ?`;
+      values.push(value);
+    }
+  }
+
+  const [rows] = await pool.query(query, values);
+  return rows;
+}
 
 module.exports = {
   getAllMenus,
@@ -110,4 +146,5 @@ module.exports = {
   createMenu,
   updateMenu,
   deleteMenu,
+  filterMenus,
 };
