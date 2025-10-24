@@ -1,16 +1,20 @@
 // services/order-service/src/index.js
 // ===================================
+
 require('dotenv').config();
+
+// Su dung bien moi truong o day
+const env = require('../src/environment');
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const orderRoutes = require('./order-service/src/routes/orderRoutes');
-const menuRoutes= require('./menu-service/src/routes/menuRoutes');
-const errorHandler = require('./order-service/src/utils/errorHandler');
+const orderRoutes = require('./routes/orderRoutes');
+const errorHandler = require('./utils/errorHandler');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT_ORDER;
 
 // Middleware
 app.use(helmet());
@@ -20,18 +24,15 @@ app.use(morgan('dev'));
 
 // Routes
 
-// menu
-app.use('/api/menu', menuRoutes);
-
 // order
 app.use('/api/orders', orderRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     service: 'order-service',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -47,6 +48,5 @@ app.listen(PORT, () => {
   console.log(`✅ Order Service running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 Orders API: http://localhost:${PORT}/api/orders`);
-  console.log(`🔗 Menu API: http://localhost:${PORT}/api/menu`);
-  console.log(`----------------`)
+  console.log(`----------------`);
 });
