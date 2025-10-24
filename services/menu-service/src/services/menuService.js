@@ -1,7 +1,9 @@
 const pool = require('../database/db');
 
-async function getAllMenus(page = 1, limit = 10) {
-  const offset = (page - 1) * limit;
+async function getAllMenus(page, limit) {
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
+  const offset = (pageNum - 1) * limitNum;
 
   // Lấy dữ liệu phân trang
   const [rows] = await pool.query('SELECT * FROM recipes LIMIT ? OFFSET ?', [
@@ -99,6 +101,8 @@ async function updateMenu(id, data) {
 async function deleteMenu(id) {
   await pool.query('DELETE FROM recipes WHERE id = ?', [id]);
 }
+
+
 
 module.exports = {
   getAllMenus,

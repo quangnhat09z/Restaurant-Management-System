@@ -1,7 +1,9 @@
-CREATE DATABASE IF NOT EXISTS restaurant_menu;
 USE restaurant_menu;
+
+DROP TABLE IF EXISTS recipes;
+
 CREATE TABLE recipes (
-  id INT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255),
   ingredients JSON,
   instructions JSON,
@@ -19,3 +21,9 @@ CREATE TABLE recipes (
   mealType JSON,
   price INT
 );
+
+
+DESCRIBE recipes;
+
+
+SELECT * FROM recipes;
