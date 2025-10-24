@@ -5,24 +5,24 @@ const MenuController = require('../controllers/menuController');
 
 
 router.get('/filter', MenuController.filterMenus);
-// http://localhost:3002/api/menu/
+// http://localhost:3002/menu/
 router.get('/', MenuController.getAllMenu);
 
 //Admin sau se lam xac thuc o day
 
-// http://localhost:3002/api/menu/1
+// http://localhost:3002/menu/1
 router.get('/:id', MenuController.getMenuById);
 
-//http://localhost:3002/api/menu/1
+//http://localhost:3002/menu/1
 // {
 //     "price": "70"
 // }
 router.put('/:id', MenuController.updateMenu);
 
-// http://localhost:3002/api/menu/51
+// http://localhost:3002/menu/51
 router.delete('/:id', MenuController.deleteMenu);
 
-// http://localhost:3002/api/menu/
+// http://localhost:3002/menu/
 // {
 //   "name": "Phở bò đặc biệt",
 //   "ingredients": ["bánh phở", "thịt bò", "hành lá", "nước dùng"],
