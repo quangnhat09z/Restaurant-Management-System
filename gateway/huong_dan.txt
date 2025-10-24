@@ -1,0 +1,12 @@
+Để chạy api-gateway (port 3000):
+- Bật all services
+- cd gateway
+- npm run start hoặc npm run dev
+
+Có các đường dẫn sau để test:
+{
+    "orders": "/api/orders",
+    "menu": "/api/menu",
+    "health": "/health",
+    "services_health": "/health/services"
+}

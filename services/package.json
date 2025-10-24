@@ -1,23 +1,17 @@
 {
-  "name": "order-service",
+  "name": "restaurant-services",
   "version": "1.0.0",
-  "description": "Order Management Microservice",
-  "main": "src/index.js",
+  "description": "All microservices",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
-    "express": "^4.21.2",
-    "helmet": "^7.2.0",
-    "joi": "^17.13.3",
-    "morgan": "^1.10.1",
-    "mysql2": "^3.15.3"
+    "start:order": "cd order-service && npm start",
+    "start:menu": "cd menu-service && npm start",
+    "start:all": "npm-run-all --parallel start:order start:menu",
+    "dev:order": "cd order-service && npm run dev",
+    "dev:menu": "cd menu-service && npm run dev",
+    "dev:all": "npm-run-all --parallel dev:order dev:menu"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "npm-run-all": "^4.1.5"
   }
 }

@@ -1,5 +1,5 @@
 // ===================================
-// gateway/src/index.js (FIX POST/PATCH)
+// gateway/src/index.js (FIX)
 // ===================================
 const express = require('express');
 const cors = require('cors');
@@ -34,7 +34,7 @@ app.use(rateLimiter);
 // Root route
 app.get('/', (req, res) => {
   res.status(200).json({
-    message: '🎉 API Gateway is running successfully!',
+    message: 'API Gateway is running successfully!',
     available_routes: {
       orders: '/api/orders',
       menu: '/api/menu',
@@ -110,7 +110,7 @@ const orderProxy = createProxyMiddleware({
   },
   
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 [ORDER] ${req.method} ${req.originalUrl} -> http://localhost:3001${proxyReq.path}`);
+    console.log(`🔄 [ORDER] ${req.method} ${req.originalUrl} -> ${serviceRegistry.orderService.url}${proxyReq.path}`);
     
     if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
       const bodyData = JSON.stringify(req.body);
@@ -150,9 +150,9 @@ const menuProxy = createProxyMiddleware({
     '^/api/menu': '/menu'
   },
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 [MENU] ${req.method} ${req.originalUrl} -> http://localhost:3002${proxyReq.path}`);
+    console.log(`🔄 [MENU] ${req.method} ${req.originalUrl} -> ${serviceRegistry.menuService.url}${proxyReq.path}`);
     
-    if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
+    if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {s
       const bodyData = JSON.stringify(req.body);
       
       proxyReq.setHeader('Content-Type', 'application/json');

@@ -25,7 +25,7 @@ app.use(morgan('dev'));
 // Routes
 
 // menu
-app.use('/api/menu', menuRoutes);
+app.use('/menu', menuRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -47,6 +47,6 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`✅ Menu Service running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Menu API: http://localhost:${PORT}/api/menu`);
+  console.log(`🔗 Menu API: http://localhost:${PORT}/menu`);
   console.log(`----------------`);
 });

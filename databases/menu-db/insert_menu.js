@@ -8,7 +8,7 @@ const mysql = require('mysql2/promise');
   const connection = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Anhphuoc1@',
+    password: '09022005',
     database: 'restaurant_menu',
   });
 

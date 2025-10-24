@@ -1,0 +1,4 @@
+Để bật hết service, thì:
+- cd services
+- npm install npm-run-all --save-dev
+- npm run start:all hoặc npm run dev:all
