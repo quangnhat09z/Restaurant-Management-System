@@ -9,6 +9,9 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const serviceRegistry = require('./config/serviceRegistry');
 const rateLimiter = require('./middleware/rateLimiter');
 const errorHandler = require('./utils/errorHandler');
+const healthRoutes = require('./routes/healthRoutes');
+const setupOrderRoutes = require('./routes/orderRoutes');
+const setupMenuRoutes = require('./routes/menuRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,145 +47,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    service: 'api-gateway',
-    uptime: process.uptime()
-  });
-});
-
-// Service health check
-app.get('/health/services', async (req, res) => {
-  const healthChecks = await Promise.allSettled(
-    Object.entries(serviceRegistry).map(async ([name, config]) => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const response = await fetch(`${config.url}/health`, {
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        return { 
-          service: name, 
-          status: response.ok ? 'UP' : 'DOWN',
-          url: config.url
-        };
-      } catch (error) {
-        return { 
-          service: name, 
-          status: 'DOWN',
-          error: error.message,
-          url: config.url
-        };
-      }
-    })
-  );
-
-  const services = healthChecks.map(result => 
-    result.status === 'fulfilled' ? result.value : { 
-      service: 'unknown', 
-      status: 'ERROR',
-      error: result.reason?.message 
-    }
-  );
-
-  const allUp = services.every(s => s.status === 'UP');
-
-  res.status(allUp ? 200 : 503).json({
-    gateway: 'UP',
-    overall_status: allUp ? 'HEALTHY' : 'DEGRADED',
-    services
-  });
-});
-
-// Order Proxy
-const orderProxy = createProxyMiddleware({
-  target: serviceRegistry.orderService.url,
-  changeOrigin: true,
-  pathFilter: '/api/orders',
-  pathRewrite: {
-    '^/api/orders': '/orders'
-  },
-  
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 [ORDER] ${req.method} ${req.originalUrl} -> ${serviceRegistry.orderService.url}${proxyReq.path}`);
-    
-    if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
-      const bodyData = JSON.stringify(req.body);
-      
-      // Update headers
-      proxyReq.setHeader('Content-Type', 'application/json');
-      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-      
-      // Write body
-      proxyReq.write(bodyData);
-      proxyReq.end();
-      
-      console.log(`[ORDER] Body forwarded: ${bodyData.substring(0, 100)}...`);
-    }
-  },
-  on: {
-    proxyRes: (proxyRes, req, res) => {
-      console.log(`[ORDER] Response: ${proxyRes.statusCode}`);
-    },
-    error: (err, req, res) => {
-      console.error('Order Service error:', err.message);
-      if (!res.headersSent) {
-        res.status(503).json({ 
-          success: false,
-          error: 'Order Service unavailable'
-        });
-      }
-    }
-  }
-});
-
-const menuProxy = createProxyMiddleware({
-  target: serviceRegistry.menuService.url,
-  changeOrigin: true,
-  pathFilter: '/api/menu',
-  pathRewrite: {
-    '^/api/menu': '/menu'
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 [MENU] ${req.method} ${req.originalUrl} -> ${serviceRegistry.menuService.url}${proxyReq.path}`);
-    
-    if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {s
-      const bodyData = JSON.stringify(req.body);
-      
-      proxyReq.setHeader('Content-Type', 'application/json');
-      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-      
-      proxyReq.write(bodyData);
-      proxyReq.end();
-      
-      console.log(`[MENU] Body forwarded: ${bodyData.substring(0, 100)}...`);
-    }
-  },
-  on: {
-    proxyRes: (proxyRes, req, res) => {
-      console.log(`[MENU] Response: ${proxyRes.statusCode}`);
-    },
-    error: (err, req, res) => {
-      console.error('Menu Service error:', err.message);
-      if (!res.headersSent) {
-        res.status(503).json({ 
-          success: false,
-          error: 'Menu Service unavailable'
-        });
-      }
-    }
-  }
-});
+app.use(healthRoutes);
 
 // Mount proxies
-app.use(orderProxy);
-app.use(menuProxy);
+setupOrderRoutes(app);
+setupMenuRoutes(app);
 
 // 404 handler
 app.use((req, res) => {
