@@ -2,12 +2,16 @@
 // ===================================
 const mysql = require('mysql2/promise');
 
+const env = require('../../../../Backend/environment.js');
+const database = 'restaurant_menu';
+console.log('devUser :', env.DB_HOST);
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '09022005',
-  database: process.env.DB_NAME || 'restaurant_menu',
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
+  database: database,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -15,8 +19,6 @@ const pool = mysql.createPool({
   keepAliveInitialDelay: 0,
 });
 
-// Dung async, await de cho vi du trong truong hop bang co nhieu du lieu
-// can nhieu thoi gian de truy van.
 (async () => {
   try {
     const connection = await pool.getConnection();
