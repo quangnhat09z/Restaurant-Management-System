@@ -4,7 +4,7 @@
 require('dotenv').config();
 
 // Su dung bien moi truong o day
-const env = require('../src/environment');
+const env = require('../../../Backend/environment');
 
 const express = require('express');
 const cors = require('cors');
