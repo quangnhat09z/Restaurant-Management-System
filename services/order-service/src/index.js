@@ -4,9 +4,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const orderRoutes = require('./routes/orderRoutes');
 const errorHandler = require('./utils/errorHandler');
+const env = require('../../../Backend/environment');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT_ORDER;
 
 // Middleware
 app.use(helmet());
