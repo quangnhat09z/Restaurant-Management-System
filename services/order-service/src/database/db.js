@@ -2,12 +2,17 @@
 // ===================================
 const mysql = require('mysql2/promise');
 
+const env = require('../../../../Backend/environment.js');
+const database = 'restaurant_orders';
+console.log('devUser :', env.DB_HOST);
+
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'Anhphuoc1@',
-  database: process.env.DB_NAME || 'restaurant_orders',
+  host: env.DB_HOST ,
+  port: env.DB_PORT ,
+  user: env.DB_USER ,
+  password: env.DB_PASSWORD,
+  database: database,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -28,3 +33,4 @@ pool
   });
 
 module.exports = pool;
+``
