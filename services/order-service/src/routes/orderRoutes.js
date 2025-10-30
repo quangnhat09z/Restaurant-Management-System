@@ -50,4 +50,8 @@ router.patch('/:id/status', orderController.updateOrderStatus);
 // http://localhost:3001/orders/1
 router.delete('/:id', orderController.deleteOrder);
 
+// Get order by customerID
+// http://localhost:3001/orders/customer/202
+router.get('/customer/:customerID', orderController.getOrderByCustomerID);
+
 module.exports = router;

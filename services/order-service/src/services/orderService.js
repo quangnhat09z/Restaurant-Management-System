@@ -5,14 +5,14 @@ const db = require('../database/db');
 class OrderService {
   async createOrder(orderData) {
     const { ContactNumber, TableNumber, CustomerName, Cart } = orderData;
-    
+
     const connection = await db.getConnection();
-    
+
     try {
       await connection.beginTransaction();
 
       // Calculate total price
-      const TotalPrice = Cart.reduce((sum, item) => 
+      const TotalPrice = Cart.reduce((sum, item) =>
         sum + (item.price * item.Quantity), 0
       );
 
@@ -26,7 +26,7 @@ class OrderService {
       const OrderID = billResult.insertId;
 
       // Insert items with prepared statements
-      const itemPromises = Cart.map(item => 
+      const itemPromises = Cart.map(item =>
         connection.query(
           `INSERT INTO item (OrderID, ItemName, TableNumber, Quantity, Price) 
            VALUES (?, ?, ?, ?, ?)`,
@@ -63,7 +63,8 @@ class OrderService {
     let query = `
       SELECT 
         b.OrderID, 
-        b.CustomerName, 
+        b.CustomerID,
+        b.CustomerName,
         b.ContactNumber, 
         b.TotalPrice, 
         b.OrderStatus,
@@ -71,19 +72,19 @@ class OrderService {
         b.UpdatedAt
       FROM bill b
     `;
-    
+
     const params = [];
-    
+
     if (status) {
       query += ' WHERE b.OrderStatus = ?';
       params.push(status);
     }
-    
+
     query += ' ORDER BY b.CreatedAt DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [orders] = await db.query(query, params);
-    
+
     // Get items for each order
     for (let order of orders) {
       const [items] = await db.query(
@@ -99,7 +100,7 @@ class OrderService {
       countQuery += ' WHERE OrderStatus = ?';
     }
     const [countResult] = await db.query(countQuery, status ? [status] : []);
-    
+
     return {
       orders,
       pagination: {
@@ -115,6 +116,7 @@ class OrderService {
     const [orders] = await db.query(
       `SELECT 
         b.OrderID, 
+        b.customerID,
         b.CustomerName, 
         b.ContactNumber, 
         b.TotalPrice, 
@@ -140,6 +142,19 @@ class OrderService {
 
     order.Items = items;
     return order;
+  }
+
+  async getOrderByCustomerID(customerID) {
+    const [orders] = await db.query(
+      `SELECT * FROM bill WHERE customerID = ?`,
+      [customerID]
+    );
+
+    if (orders.length === 0) {
+      return null;
+    };
+
+    return orders;
   }
 
   async updateOrderStatus(id, status) {

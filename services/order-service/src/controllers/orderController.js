@@ -9,17 +9,17 @@ class OrderController {
       // Validate request
       const { error, value } = validateOrder(req.body);
       if (error) {
-        return res.status(400).json({ 
-          error: 'Validation Error', 
-          details: error.details.map(d => d.message) 
+        return res.status(400).json({
+          error: 'Validation Error',
+          details: error.details.map(d => d.message)
         });
       }
 
       const order = await orderService.createOrder(value);
-      res.status(201).json({ 
+      res.status(201).json({
         success: true,
-        message: 'Order created successfully', 
-        data: order 
+        message: 'Order created successfully',
+        data: order
       });
     } catch (err) {
       next(err);
@@ -30,7 +30,7 @@ class OrderController {
     try {
       const { page = 1, limit = 10, status } = req.query;
       const result = await orderService.getOrders(page, limit, status);
-      res.status(200).json({ 
+      res.status(200).json({
         success: true,
         data: result.orders,
         pagination: result.pagination
@@ -44,17 +44,38 @@ class OrderController {
     try {
       const { id } = req.params;
       const order = await orderService.getOrderById(id);
-      
+
       if (!order) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          error: 'Order not found' 
+          error: 'Order not found'
         });
       }
-      
-      res.status(200).json({ 
+
+      res.status(200).json({
         success: true,
-        data: order 
+        data: order
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getOrderByCustomerID(req, res, next) {
+    try {
+      const { customerID } = req.params;
+      const order = await orderService.getOrderByCustomerID(customerID);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: 'CustomerID not found'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: order
       });
     } catch (err) {
       next(err);
@@ -64,27 +85,27 @@ class OrderController {
   async updateOrderStatus(req, res, next) {
     try {
       const { id } = req.params;
-      
+
       // Validate status
       const { error, value } = validateUpdateStatus(req.body);
       if (error) {
-        return res.status(400).json({ 
-          error: 'Validation Error', 
-          details: error.details.map(d => d.message) 
+        return res.status(400).json({
+          error: 'Validation Error',
+          details: error.details.map(d => d.message)
         });
       }
-      
+
       const updated = await orderService.updateOrderStatus(id, value.status);
-      res.status(200).json({ 
+      res.status(200).json({
         success: true,
-        message: 'Order status updated successfully', 
-        data: updated 
+        message: 'Order status updated successfully',
+        data: updated
       });
     } catch (err) {
       if (err.message === 'Order not found') {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          error: 'Order not found' 
+          error: 'Order not found'
         });
       }
       next(err);
@@ -95,16 +116,16 @@ class OrderController {
     try {
       const { id } = req.params;
       const result = await orderService.deleteOrder(id);
-      res.status(200).json({ 
+      res.status(200).json({
         success: true,
-        message: 'Order deleted successfully', 
-        data: result 
+        message: 'Order deleted successfully',
+        data: result
       });
     } catch (err) {
       if (err.message === 'Order not found') {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          error: 'Order not found' 
+          error: 'Order not found'
         });
       }
       next(err);
