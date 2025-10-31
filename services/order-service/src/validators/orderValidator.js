@@ -11,6 +11,14 @@ const orderItemSchema = Joi.object({
 });
 
 const orderSchema = Joi.object({
+  CustomerID: Joi.number()
+    .integer()
+    .min(1)
+    .required()
+    .messages({
+      'number.min': 'CustomerID must be at least 1',
+      'any.required': 'CustomerID is required'
+    }),
   ContactNumber: Joi.string()
     .pattern(/^[0-9]{10,15}$/)
     .required()
@@ -61,7 +69,7 @@ function validateUpdateStatus(data) {
   return updateStatusSchema.validate(data);
 }
 
-module.exports = { 
-  validateOrder, 
-  validateUpdateStatus 
+module.exports = {
+  validateOrder,
+  validateUpdateStatus
 };

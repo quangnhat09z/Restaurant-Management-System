@@ -4,7 +4,7 @@ const db = require('../database/db');
 
 class OrderService {
   async createOrder(orderData) {
-    const { ContactNumber, TableNumber, CustomerName, Cart } = orderData;
+    const {CustomerID, ContactNumber, TableNumber, CustomerName, Cart } = orderData;
 
     const connection = await db.getConnection();
 
@@ -18,9 +18,9 @@ class OrderService {
 
       // Insert into bill table with prepared statement
       const [billResult] = await connection.query(
-        `INSERT INTO bill (CustomerName, ContactNumber, TotalPrice, OrderStatus, CreatedAt) 
-         VALUES (?, ?, ?, ?, NOW())`,
-        [CustomerName, ContactNumber, TotalPrice, 'pending']
+        `INSERT INTO bill (customerID, CustomerName, ContactNumber, TotalPrice, OrderStatus, CreatedAt) 
+         VALUES (?, ?, ?, ?, ?, NOW())`,
+        [CustomerID, CustomerName, ContactNumber, TotalPrice, 'pending']
       );
 
       const OrderID = billResult.insertId;
@@ -41,6 +41,7 @@ class OrderService {
 
       return {
         OrderID,
+        CustomerID,
         CustomerName,
         ContactNumber,
         TotalPrice,
