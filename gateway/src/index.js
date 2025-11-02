@@ -24,7 +24,9 @@ app.use(cors());
 
 app.use((req, res, next) => {
   // Skip body parsing cho proxy routes
-  if (req.path.startsWith('/api/orders') || req.path.startsWith('/api/menu')) {
+  if (req.path.startsWith('/api/orders') 
+    || req.path.startsWith('/api/menu') 
+    || req.path.startsWith('/api/customers')) {
     return next();
   }
   express.json()(req, res, next);
