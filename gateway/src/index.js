@@ -12,6 +12,7 @@ const errorHandler = require('./utils/errorHandler');
 const healthRoutes = require('./routes/healthRoutes');
 const setupOrderRoutes = require('./routes/orderRoutes');
 const setupMenuRoutes = require('./routes/menuRoutes');
+const setupCustomerRoutes = require('./routes/customerRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.get('/', (req, res) => {
     available_routes: {
       orders: '/api/orders',
       menu: '/api/menu',
+      customer:'/api/customers',
       health: '/health',
       services_health: '/health/services'
     }
@@ -52,6 +54,7 @@ app.use(healthRoutes);
 // Mount proxies
 setupOrderRoutes(app);
 setupMenuRoutes(app);
+setupCustomerRoutes(app);
 
 // 404 handler
 app.use((req, res) => {

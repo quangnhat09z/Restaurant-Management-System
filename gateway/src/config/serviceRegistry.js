@@ -11,5 +11,11 @@ module.exports = {
     url: process.env.MENU_SERVICE_URL || 'http://localhost:3002',
     name: 'Menu Service',
     healthCheck: '/health'
+  },
+  customerService: {
+    url: process.env.MENU_SERVICE_URL || 'http://localhost:3003',
+    name: 'Customer Service',
+    healthCheck: '/health'
   }
+  
 };

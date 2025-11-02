@@ -1,18 +1,18 @@
-// routes/orderRoutes.js
+// routes/customerRoutes.js
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const serviceRegistry = require('../config/serviceRegistry');
 
 module.exports = (app) => {
-  const orderProxy = createProxyMiddleware({
-    target: serviceRegistry.orderService.url,
+  const customerProxy = createProxyMiddleware({
+    target: serviceRegistry.customerService.url,
     changeOrigin: true,
-    pathFilter: '/api/orders',
+    pathFilter: '/api/customers',
     pathRewrite: {
-      '^/api/orders': '/orders'
+      '^/api/customers': '/customers'
     },
 
     onProxyReq: (proxyReq, req, res) => {
-      console.log(`🔄 [ORDER] ${req.method} ${req.originalUrl} -> ${serviceRegistry.orderService.url}${proxyReq.path}`);
+      console.log(`🔄 [CUSTOMER] ${req.method} ${req.originalUrl} -> ${serviceRegistry.customerService.url}${proxyReq.path}`);
 
       if (req.body && (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT')) {
         const bodyData = JSON.stringify(req.body);
@@ -20,25 +20,25 @@ module.exports = (app) => {
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
         proxyReq.end();
-        console.log(`[ORDER] Body forwarded: ${bodyData.substring(0, 100)}...`);
+        console.log(`[CUSTOMER] Body forwarded: ${bodyData.substring(0, 100)}...`);
       }
     },
 
     on: {
       proxyRes: (proxyRes, req, res) => {
-        console.log(`[ORDER] Response: ${proxyRes.statusCode}`);
+        console.log(`[CUSTOMER] Response: ${proxyRes.statusCode}`);
       },
       error: (err, req, res) => {
-        console.error('Order Service error:', err.message);
+        console.error('CUSTOMER Service error:', err.message);
         if (!res.headersSent) {
           res.status(503).json({
             success: false,
-            error: 'Order Service unavailable'
+            error: 'CUSTOMER Service unavailable'
           });
         }
       }
     }
   });
 
-  app.use(orderProxy);
+  app.use(customerProxy);
 };
