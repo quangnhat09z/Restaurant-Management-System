@@ -1,23 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const CustomerController = require('../controllers/customerController');
+const customerController = require('../controllers/customerController');
 
 // Đăng ký khách hàng
-router.post('/register', CustomerController.registerCustomer);
+router.post('/register', customerController.registerCustomer);
 
 // Đăng nhập khách hàng
-router.post('/login', CustomerController.loginCustomer);
+router.post('/login', customerController.loginCustomer);
 
 // Lấy danh sách khách hàng
-router.get('/', CustomerController.getAllCustomers);
+router.get('/', customerController.getAllCustomers);
 
 // Lấy khách hàng theo ID
-router.get('/:id', CustomerController.getCustomerById);
+router.get('/:id', customerController.getCustomerById);
 
 // Cập nhật khách hàng
-router.put('/:id', CustomerController.updateCustomer);
+router.put('/:id', customerController.updateCustomer);
 
 // Xóa khách hàng
-router.delete('/:id', CustomerController.deleteCustomer);
+router.delete('/:id', customerController.deleteCustomer);
+
+// Customer's orders (gọi thông qua Order Service)
+router.get('/:id/orders', customerController.getCustomerOrders);
+router.post('/:id/orders', customerController.createCustomerOrder);
 
 module.exports = router;

@@ -13,7 +13,7 @@ const orderItemSchema = Joi.object({
 const orderSchema = Joi.object({
   CustomerID: Joi.number()
     .integer()
-    .min(1)
+    .min(1) 
     .required()
     .messages({
       'number.min': 'CustomerID must be at least 1',
