@@ -13,7 +13,7 @@ module.exports = {
     healthCheck: '/health'
   },
   customerService: {
-    url: process.env.MENU_SERVICE_URL || 'http://localhost:3003',
+    url: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3003',
     name: 'Customer Service',
     healthCheck: '/health'
   }
