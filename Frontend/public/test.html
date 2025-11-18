@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Test</title>
+</head>
+<body>
+    <h1>Direct API Test</h1>
+    <div id="result">Loading...</div>
+    <script>
+        fetch('http://localhost:3000/api/menu')
+            .then(r => r.json())
+            .then(data => {
+                let html = '<h2>Success!</h2>';
+                html += '<p>Items: ' + (data.data?.length || 0) + '</p>';
+                if (data.data) {
+                    data.data.slice(0, 3).forEach(item => {
+                        html += '<div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">';
+                        html += '<h3>' + item.name + '</h3>';
+                        html += '<img src="' + item.image + '" style="width: 100px;">';
+                        html += '<p>Price: ' + item.price + '</p>';
+                        html += '</div>';
+                    });
+                }
+                document.getElementById('result').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = '<h2 style="color: red;">Error: ' + err.message + '</h2>';
+            });
+    </script>
+</body>
+</html>

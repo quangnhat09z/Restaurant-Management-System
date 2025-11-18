@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Cart, Itemframes, Customers } from '../../imports';
-import axios from 'axios';
+import api from '../../api/axiosInstance';
 import { useDarkMode } from '../../context/DarkModeContext';
 
 function Home() {
@@ -34,7 +34,7 @@ function Home() {
 
   async function placeOrder(order) {
     try {
-      await axios.post('http://localhost:3000/placeorder', [order]);
+      await api.post('/api/orders', [order]);
       clearcart();
       alert('Order Placed Successfully \nThank You for Ordering');
     } catch (error) {

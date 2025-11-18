@@ -1,6 +1,7 @@
 import { React } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Home, Orders, Navbar ,FavoriteItems} from "./imports";
+import TestPage from "./TestPage";
 import { OrderProvider } from "./context/OrderContext";
 import { DarkModeProvider, useDarkMode } from './context/DarkModeContext'; // Import DarkModeProvider
 import { FavoriteProvider } from './context/FavoriteContext'; // Import FavoriteProvider
@@ -26,6 +27,7 @@ function Main() {
         <Navbar /> {/* Navbar included here */}
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/test" element={<TestPage />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/favorites" element={<FavoriteItems />} /> {/* Add this line */}
             <Route path="*" element={<h1>404 NOT FOUND</h1>} />

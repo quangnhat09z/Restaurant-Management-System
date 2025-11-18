@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LoadingSpinner, Skelleton } from '../../imports';
 import { useDarkMode } from '../../context/DarkModeContext'; // Import useDarkMode
+import api from '../../api/axiosInstance';
 
 function Orders() {
   const [orderItems, setOrderItems] = useState([]);
@@ -18,11 +19,13 @@ function Orders() {
   }, []);
 
   useEffect(() => {
-    fetch('http://localhost:3000/getorder')
-      .then(response => response.json())
-      .then(data => {
-        console.log('Fetched order items:', data.orders);
-        setOrderItems(data.orders);
+    api.get('/api/orders')
+      .then(response => {
+        const data = response.data;
+        console.log('Fetched order items:', data);
+        // Handle different response formats
+        const orderData = data.orders || data.data || data || [];
+        setOrderItems(Array.isArray(orderData) ? orderData : []);
       })
       .catch(error => {
         console.error('Error fetching order items:', error);

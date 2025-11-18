@@ -1,14 +1,40 @@
-import { useContext } from 'react';
-import data from '../../assets/item.json';
+import { useContext, useEffect, useState } from 'react';
 import { FavoriteContext } from '../../context/FavoriteContext'; // Import FavoriteContext
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'; // Solid heart
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'; // Regular heart
+import api from '../../api/axiosInstance';
 
 const ItemFrames = ({ addToCart }) => {
   const { favoriteItems, addToFavorites, removeFromFavorites } =
     useContext(FavoriteContext); // Use FavoriteContext
-  const items = data.menuItems;
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log('Itemframes: Fetching from /api/menu...');
+    // Fetch menu from API - use /api/menu endpoint
+    api.get('/api/menu')
+      .then((response) => {
+        console.log('Itemframes: API response:', response.data);
+        // Handle pagination structure from API
+        let menuData = [];
+        if (response.data?.data && Array.isArray(response.data.data)) {
+          menuData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          menuData = response.data;
+        }
+        console.log('Itemframes: Parsed menu data count:', menuData.length);
+        setItems(menuData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Itemframes: Error fetching menu:', err);
+        setError('Failed to load menu items: ' + (err.message || 'Unknown error'));
+        setLoading(false);
+      });
+  }, []);
 
   const toggleFavorite = (item) => {
     if (favoriteItems.some((fav) => fav.id === item.id)) {
@@ -18,11 +44,36 @@ const ItemFrames = ({ addToCart }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+        <p>Loading menu items...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+        <p>⚠️ {error}</p>
+        <p style={{ fontSize: '12px', marginTop: '10px' }}>Debug: Check browser console (F12)</p>
+      </div>
+    );
+  }
+
+  if (!items || items.length === 0) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+        <p>No menu items available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <div
-          key={index}
+          key={item.id || Math.random()}
           className="menu-item bg-white shadow-lg rounded-lg p-4 transform transition duration-300 hover:scale-105 hover:shadow-xl"
         >
           <img

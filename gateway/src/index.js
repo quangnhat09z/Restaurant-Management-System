@@ -19,7 +19,12 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins for development
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Enable-Claude']
+}));
 
 
 app.use((req, res, next) => {
