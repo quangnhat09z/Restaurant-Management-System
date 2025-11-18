@@ -18,6 +18,9 @@ const environment = {
   DB_PORT: process.env.DB_PORT,
   PORT_ORDER: process.env.PORT_ORDER,
   PORT_MENU: process.env.PORT_MENU,
+  REDIS_HOST: process.env.REDIS_HOST,
+  REDIS_PORT: process.env.REDIS_PORT,
+  
 };
 // console.log(environment);
 

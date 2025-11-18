@@ -3,6 +3,7 @@ const {
   validateUpdateRecipe,
   validateRecipe,
 } = require('../validators/menuValidator');
+const { clearMenuCache, clearCache } = require('../middleware/cacheMiddleware');
 
 exports.getAllMenu = async (req, res) => {
   try {
@@ -26,7 +27,6 @@ exports.getMenuById = async (req, res) => {
   }
 };
 
-///Validate
 exports.createMenu = async (req, res) => {
   try {
     const { error } = validateRecipe(req.body);
@@ -37,6 +37,10 @@ exports.createMenu = async (req, res) => {
       });
     }
     const id = await menuService.createMenu(req.body);
+
+    // Clear cache sau khi tạo mới
+    await clearCache('menu:/*');
+
     res.status(201).json({ message: 'Menu created', id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -54,6 +58,10 @@ exports.updateMenu = async (req, res) => {
     }
 
     const updated = await menuService.updateMenu(req.params.id, req.body);
+
+    // Clear cache cho menu cụ thể và danh sách
+    await clearMenuCache(req.params.id);
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -63,6 +71,10 @@ exports.updateMenu = async (req, res) => {
 exports.deleteMenu = async (req, res) => {
   try {
     await menuService.deleteMenu(req.params.id);
+
+    // Clear cache sau khi xóa
+    await clearMenuCache(req.params.id);
+
     res.json({ message: 'Menu deleted successfully!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -84,5 +96,3 @@ exports.filterMenus = async (req, res) => {
     res.status(500).json({ error: 'Failed to filter menus' });
   }
 };
-
-
