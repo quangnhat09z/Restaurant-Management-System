@@ -5,9 +5,9 @@ const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 
 // Cache thời gian (giây)
 const CACHE_DURATION = {
-  LIST: 300, // 5 phút cho danh sách
-  DETAIL: 600, // 10 phút cho chi tiết
-  FILTER: 180, // 3 phút cho filter
+  LIST: 3600, 
+  DETAIL: 3600, // 3600/60=60p
+  FILTER: 3600, 
 };
 
 // GET routes với cache

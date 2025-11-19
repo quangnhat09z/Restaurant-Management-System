@@ -9,7 +9,6 @@ exports.getAllMenu = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const menus = await menuService.getAllMenus(page, limit);
-    console.log('Da chay dc den day');
     res.json(menus);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -13,7 +13,7 @@ redisClient.on('error', (err) => {
 });
 
 redisClient.on('connect', () => {
-  console.log('Connected to Redis');
+  console.log('Connect to Redis successfully!');
 });
 
 // Connect to Redis

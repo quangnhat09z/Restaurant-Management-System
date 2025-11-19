@@ -1,111 +1,77 @@
-// Simple in-memory cache middleware for menu-service
+const redisClient = require('../config/redisClient');
 
-// In production, use Redis or similar
-
-
-
-const cache = new Map();
-
-
-
-// Cache middleware factory - returns a middleware function
-
-const cacheMiddleware = (duration = 60000) => {
-
-  return (req, res, next) => {
-
-    // For GET requests only
-
+// Cache middleware cho GET requests
+const cacheMiddleware = (duration = 300) => {
+  return async (req, res, next) => {
     if (req.method !== 'GET') {
-
       return next();
-
     }
 
+    // Tạo cache key từ route và query params
+    const key = `menu:${req.originalUrl || req.url}`;
 
+    try {
+      // Check cache
+      const cachedData = await redisClient.get(key);
 
-    const key = req.originalUrl || req.url;
+      if (cachedData) {
+        console.log(`Cache HIT for key: ${key}`);
+        return res.json(JSON.parse(cachedData));
+      }
 
-    const cachedData = cache.get(key);
+      console.log(`Cache MISS for key: ${key}`);
 
+      // Modify res.json để cache response
+      const originalJson = res.json.bind(res);
+      res.json = (data) => {
+        // Cache data
+        redisClient.setEx(key, duration, JSON.stringify(data)).catch((err) => {
+          console.error('Error caching data:', err);
+        });
+        return originalJson(data);
+      };
 
-
-    if (cachedData && Date.now() - cachedData.timestamp < duration) {
-
-      return res.json(cachedData.data);
-
+      next();
+    } catch (err) {
+      console.error('Cache middleware error:', err);
+      next();
     }
-
-
-
-    // Store original json method
-
-    const originalJson = res.json;
-
-    res.json = function(data) {
-
-      // Cache the response
-
-      cache.set(key, {
-
-        data,
-
-        timestamp: Date.now()
-
-      });
-
-      // Call original json method
-
-      return originalJson.call(this, data);
-
-    };
-
-
-
-    next();
-
   };
-
 };
 
-
-
-// Clear cache for a specific key or pattern
-
-const clearCache = async (pattern) => {
-
-  if (pattern === 'menu:/*') {
-
-    // Clear all menu-related cache
-
-    cache.clear();
-
-  } else {
-
-    cache.delete(pattern);
-
+// Clear cache theo pattern
+const clearCache = async (pattern = 'menu:*') => {
+  try {
+    const keys = await redisClient.keys(pattern); 
+    console.log(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      console.log(`Cleared ${keys.length} cache keys matching: ${pattern}`);
+    }
+  } catch (err) {
+    console.error('Error clearing cache:', err);
   }
-
 };
 
+// Clear cache cho một menu cụ thể
+const clearMenuCache = async (menuId) => {
+  try {
+    const patterns = ['menu:/menu/', 'menu:/menu/filter*', `menu:/menu/${menuId}*`];
 
-
-// Clear all cache
-
-const clearMenuCache = () => {
-
-  cache.clear();
-
+    for (const pattern of patterns) {
+      const keys = await redisClient.keys(pattern);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    }
+    console.log(`Cleared cache for menu ${menuId}`);
+  } catch (err) {
+    console.error('Error clearing menu cache:', err);
+  }
 };
-
-
 
 module.exports = {
-
   cacheMiddleware,
-
   clearCache,
-
   clearMenuCache,
-
 };
