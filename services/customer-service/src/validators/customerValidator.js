@@ -9,6 +9,11 @@ const registerSchema = Joi.object({
   Address: Joi.string().allow('', null).max(255),
 });
 
+const loginSchema = Joi.object({
+  Email: Joi.string().email().required(),
+  Password: Joi.string().min(1).required(),
+});
+
 const updateSchema = Joi.object({
   customerName: Joi.string().min(1).max(100).optional(),
   Email: Joi.string().email().optional(),
@@ -24,4 +29,8 @@ function validateUpdate(data) {
   return updateSchema.validate(data, { abortEarly: false });
 }
 
-module.exports = { validateRegister, validateUpdate };
+function validateLogin(data) {
+  return loginSchema.validate(data, { abortEarly: false });
+}
+
+module.exports = { validateRegister, validateUpdate, validateLogin };

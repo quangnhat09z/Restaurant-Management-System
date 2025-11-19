@@ -1,12 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
+const { validateRegister, validateLogin, validateUpdate } = require('../validators/customerValidator');
+
+// helper middleware to format Joi errors
+function validationMiddleware(validator) {
+	return (req, res, next) => {
+		console.log('[validator] path=', req.path);
+		console.log('[validator] body keys=', Object.keys(req.body || {}));
+		const { error } = validator(req.body);
+		if (error) {
+			const details = error.details.map(d => d.message);
+			return res.status(400).json({ error: 'Invalid input', details });
+		}
+		next();
+	};
+}
 
 // Đăng ký khách hàng
-router.post('/register', customerController.registerCustomer);
+router.post('/register', validationMiddleware(validateRegister), customerController.registerCustomer);
 
 // Đăng nhập khách hàng
-router.post('/login', customerController.loginCustomer);
+router.post('/login', validationMiddleware(validateLogin), customerController.loginCustomer);
 
 // Lấy danh sách khách hàng
 router.get('/', customerController.getAllCustomers);
@@ -15,7 +30,7 @@ router.get('/', customerController.getAllCustomers);
 router.get('/:id', customerController.getCustomerById);
 
 // Cập nhật khách hàng
-router.put('/:id', customerController.updateCustomer);
+router.put('/:id', validationMiddleware(validateUpdate), customerController.updateCustomer);
 
 // Xóa khách hàng
 router.delete('/:id', customerController.deleteCustomer);

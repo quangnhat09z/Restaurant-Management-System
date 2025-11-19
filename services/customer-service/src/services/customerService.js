@@ -18,16 +18,25 @@ exports.registerCustomer = async (customerData) => {
 };
 
 // =================== Đăng nhập khách hàng ===================
-exports.loginCustomer = async (Email, Password) => {
+// Accepts an object { Email, Password }
+exports.loginCustomer = async ({ Email, Password }) => {
   const [rows] = await pool.query(`SELECT * FROM customer WHERE Email = ?`, [Email]);
   const customer = rows[0];
 
   if (!customer) throw new Error('Customer not found');
 
-  const isPasswordValid = await bcrypt.compare(Password, customer.Password);
-  if (!isPasswordValid) throw new Error('Invalid password');
+  // Try bcrypt compare first (normal case when passwords are hashed)
+  try {
+    const isPasswordValid = await bcrypt.compare(Password, customer.Password);
+    if (isPasswordValid) return customer;
+  } catch (e) {
+    // ignore and fall back to plaintext compare below
+  }
 
-  return customer;
+  // Fallback: if DB stored plaintext (local dev), allow direct equality
+  if (Password === customer.Password) return customer;
+
+  throw new Error('Invalid password');
 };
 
 // =================== Lấy danh sách khách hàng ===================

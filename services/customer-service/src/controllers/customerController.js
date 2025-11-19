@@ -7,36 +7,54 @@ const CustomerController = {
       const id = await customerService.registerCustomer(req.body);
       res.status(201).json({ message: 'Customer registered successfully', id });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('Register error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
   async loginCustomer(req, res) {
     try {
       const customer = await customerService.loginCustomer(req.body);
-      if (customer) res.status(200).json({ message: 'Login successful', customer });
+      if (customer) {
+        const copy = { ...customer };
+        if (copy.Password) delete copy.Password;
+        return res.status(200).json({ message: 'Login successful', customer: copy });
+      }
       else res.status(401).json({ error: 'Invalid email or password' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('Login error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
   async getAllCustomers(req, res) {
     try {
       const customers = await customerService.getAllCustomers();
-      res.status(200).json(customers);
+      // Remove password field before sending to clients
+      const sanitized = customers.map(c => {
+        const copy = { ...c };
+        if (copy.Password) delete copy.Password;
+        return copy;
+      });
+      res.status(200).json(sanitized);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('GetAllCustomers error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
   async getCustomerById(req, res) {
     try {
       const customer = await customerService.getCustomerById(req.params.id);
-      if (customer) res.status(200).json(customer);
+      if (customer) {
+        const copy = { ...customer };
+        if (copy.Password) delete copy.Password;
+        return res.status(200).json(copy);
+      }
       else res.status(404).json({ error: 'Customer not found' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('GetCustomerById error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
@@ -46,7 +64,8 @@ const CustomerController = {
       if (updated) res.status(200).json({ message: 'Customer updated successfully' });
       else res.status(404).json({ error: 'Customer not found' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('UpdateCustomer error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
@@ -56,7 +75,8 @@ const CustomerController = {
       if (deleted) res.status(200).json({ message: 'Customer deleted successfully' });
       else res.status(404).json({ error: 'Customer not found' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('DeleteCustomer error:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 

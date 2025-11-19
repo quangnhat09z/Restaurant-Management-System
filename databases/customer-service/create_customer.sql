@@ -17,3 +17,10 @@ CREATE TABLE IF NOT EXISTS customer (
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Sample customers (plaintext passwords for local dev; backend uses hashing on register)
+INSERT INTO customer (customerName, Email, ContactNumber, Password, Address, createdAt, updatedAt)
+VALUES
+    ('alice', 'alice@example.com', '+841234567890', 'password123', '123 Hanoi St', NOW(), NOW()),
+    ('bob', 'bob@example.com', '+849876543210', 'secret456', '456 Saigon Rd', NOW(), NOW()),
+    ('quang', 'quang@example.com', '+84900111222', 'qwerty', '789 Da Nang Ave', NOW(), NOW());

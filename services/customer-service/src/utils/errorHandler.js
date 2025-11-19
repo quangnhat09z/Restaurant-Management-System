@@ -19,11 +19,17 @@ module.exports = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+
+  // Do not leak internal error messages (such as SQL errors) to clients.
+  // For server errors (5xx) return a generic message. For client errors (4xx)
+  // we can return the provided message.
+  let clientMessage = 'Internal Server Error';
+  if (statusCode >= 400 && statusCode < 500) {
+    clientMessage = err.message || 'Bad request';
+  }
 
   res.status(statusCode).json({
     success: false,
-    error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    error: clientMessage
   });
 };
