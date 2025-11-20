@@ -5,25 +5,25 @@ const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 
 // Cache thời gian (giây)
 const CACHE_DURATION = {
-  LIST: 7200, 
-  DETAIL: 7200, // 3600/60=60p
-  FILTER: 7200, 
+  LIST_TIME: 3600, 
+  DETAIL_TIME: 3600, // 3600/60=60p
+  FILTER_TIME: 3600, 
 };
 
 // GET routes với cache
 router.get(
   '/filter',
-  cacheMiddleware(CACHE_DURATION.FILTER),
+  cacheMiddleware(CACHE_DURATION.FILTER_TIME),
   MenuController.filterMenus
 );
 router.get(
   '/',
-  cacheMiddleware(CACHE_DURATION.LIST),
+  cacheMiddleware(CACHE_DURATION.LIST_TIME),
   MenuController.getAllMenu
 );
 router.get(
   '/:id',
-  cacheMiddleware(CACHE_DURATION.DETAIL),
+  cacheMiddleware(CACHE_DURATION.DETAIL_TIME),
   MenuController.getMenuById
 );
 
