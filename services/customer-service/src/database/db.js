@@ -1,7 +1,7 @@
-// services/customer-service/src/database/db.js
+// services/user-service/src/database/db.js
 const mysql = require('mysql2/promise');
-const env = require('../../../../Backend/environment.js'); // giống menu-service
-const database = 'restaurant_customer';
+const env = require('../../../../Backend/environment.js');
+const database = 'restaurant_user';
 
 const pool = mysql.createPool({
   host: env.DB_HOST,
@@ -19,14 +19,13 @@ const pool = mysql.createPool({
 (async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Customer DB connected successfully');
+    console.log('✅ User DB connected successfully');
     const [tables] = await pool.query('SHOW TABLES;');
     console.log('📋 Tables:', tables);
     connection.release();
   } catch (err) {
-    console.error('❌ Customer DB connection failed:', err.message);
+    console.error('❌ User DB connection failed:', err.message);
     process.exit(1);
   }
 })();
-
 module.exports = pool;
