@@ -56,18 +56,27 @@ const clearCache = async (pattern = 'menu:*') => {
   }
 };
 
-// Clear cache cho một menu cụ thể
+
+
 const clearMenuCache = async (menuId) => {
   try {
-    const patterns = ['menu:/menu/', 'menu:/menu/filter*', `menu:/menu/${menuId}*`];
+    // Clear cache cho menu cụ thể và tất cả list/filter
+    const patterns = [
+      `menu:/menu/${menuId}*`,  // Chi tiết menu
+      'menu:/menu?*',            // List với pagination
+      'menu:/menu/filter*'       // Filter queries
+    ];
 
+    let totalCleared = 0;
     for (const pattern of patterns) {
       const keys = await redisClient.keys(pattern);
       if (keys.length > 0) {
         await redisClient.del(keys);
+        totalCleared += keys.length;
       }
     }
-    console.log(`Cleared cache for menu ${menuId}`);
+    
+    console.log(`🗑️ Cleared ${totalCleared} cache keys for menu ${menuId}`);
   } catch (err) {
     console.error('Error clearing menu cache:', err);
   }

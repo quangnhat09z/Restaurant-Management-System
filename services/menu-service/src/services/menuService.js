@@ -102,42 +102,81 @@ async function deleteMenu(id) {
   await pool.query('DELETE FROM recipes WHERE id = ?', [id]);
 }
 
+// menuService.js - Cải tiến
 async function filterMenus(filters) {
+  // Whitelist các field được phép filter
+  const ALLOWED_FIELDS = [
+    'name', 'cuisine', 'difficulty', 'prepTimeMinutes', 
+    'cookTimeMinutes', 'servings', 'caloriesPerServing', 
+    'rating', 'price', 'userId'
+  ];
+
   let query = 'SELECT * FROM recipes WHERE 1=1';
   const values = [];
 
   for (const [key, value] of Object.entries(filters)) {
     if (['page', 'limit'].includes(key)) continue;
 
-    // Nếu muốn tìm theo substring (contains) mặc định cho các field text
-    if (['name', 'cuisine', 'difficulty'].includes(key)) {
-      query += ` AND ${key} LIKE ?`;
-      values.push(`%${value}%`);
-    } else if (key.endsWith('_gte')) {
-      const field = key.replace('_gte', '');
-      query += ` AND ${field} >= ?`;
-      values.push(value);
+    // Xác định field thực tế
+    let field = key;
+    let operator = '=';
+    
+    if (key.endsWith('_gte')) {
+      field = key.replace('_gte', '');
+      operator = '>=';
     } else if (key.endsWith('_lte')) {
-      const field = key.replace('_lte', '');
-      query += ` AND ${field} <= ?`;
-      values.push(value);
+      field = key.replace('_lte', '');
+      operator = '<=';
     } else if (key.endsWith('_gt')) {
-      const field = key.replace('_gt', '');
-      query += ` AND ${field} > ?`;
-      values.push(value);
+      field = key.replace('_gt', '');
+      operator = '>';
     } else if (key.endsWith('_lt')) {
-      const field = key.replace('_lt', '');
-      query += ` AND ${field} < ?`;
-      values.push(value);
+      field = key.replace('_lt', '');
+      operator = '<';
+    }
+
+    // Validate field name (chống SQL injection)
+    if (!ALLOWED_FIELDS.includes(field)) {
+      console.warn(`⚠️ Ignored invalid field: ${field}`);
+      continue;
+    }
+
+    // Xử lý LIKE search
+    if (['name', 'cuisine', 'difficulty'].includes(field)) {
+      query += ` AND ${field} LIKE ?`;
+      values.push(`%${value}%`);
     } else {
-      // So sánh bằng cho các field khác
-      query += ` AND ${key} = ?`;
+      query += ` AND ${field} ${operator} ?`;
       values.push(value);
     }
   }
 
+  // Thêm pagination
+  const page = parseInt(filters.page) || 1;
+  const limit = parseInt(filters.limit) || 10;
+  const offset = (page - 1) * limit;
+
+  query += ' LIMIT ? OFFSET ?';
+  values.push(limit, offset);
+
   const [rows] = await pool.query(query, values);
-  return rows;
+  
+  // Lấy total count
+  const countQuery = query.split('LIMIT')[0];
+  const [[{ total }]] = await pool.query(
+    countQuery.replace('SELECT *', 'SELECT COUNT(*) as total'),
+    values.slice(0, -2)
+  );
+
+  return {
+    data: rows,
+    pagination: {
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalItems: total,
+      limit
+    }
+  };
 }
 
 module.exports = {
