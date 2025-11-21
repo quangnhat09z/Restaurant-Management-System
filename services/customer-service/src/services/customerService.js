@@ -1,82 +1,110 @@
-const pool = require('../database/db'); // đảm bảo file db.js nằm trong thư mục /database
+const pool = require('../database/db');
 const bcrypt = require('bcrypt');
 
-// =================== Đăng ký khách hàng ===================
-exports.registerCustomer = async (customerData) => {
-  const { customerName, Email, ContactNumber, Password, Address } = customerData;
+// =================== Đăng ký người dùng ===================
+exports.registerUser = async (userData) => {
+  const { userName, email, contactNumber, password, address } = userData;
+
+  if (!password) throw new Error('Password is required');
 
   // Mã hóa mật khẩu
-  const hashedPassword = await bcrypt.hash(Password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const [result] = await pool.query(
-    `INSERT INTO customer (customerName, Email, ContactNumber, Password, Address, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
-    [customerName, Email, ContactNumber, hashedPassword, Address]
+    `INSERT INTO user (userName, email, contactNumber, password, address, role, isActive, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, 'user', TRUE, NOW(), NOW())`,
+    [userName, email, contactNumber, hashedPassword, address]
   );
 
   return result.insertId;
 };
 
-// =================== Đăng nhập khách hàng ===================
-// Accepts an object { Email, Password }
-exports.loginCustomer = async ({ Email, Password }) => {
-  const [rows] = await pool.query(`SELECT * FROM customer WHERE Email = ?`, [Email]);
-  const customer = rows[0];
+// =================== Đăng nhập người dùng ===================
+exports.loginUser = async ({ email, password }) => {
+  const [rows] = await pool.query(
+    `SELECT * FROM user WHERE email = ? AND isActive = TRUE`,
+    [email]
+  );
+  const user = rows[0];
 
-  if (!customer) throw new Error('Customer not found');
+  if (!user) throw new Error('User not found or account inactive');
 
-  // Try bcrypt compare first (normal case when passwords are hashed)
-  try {
-    const isPasswordValid = await bcrypt.compare(Password, customer.Password);
-    if (isPasswordValid) return customer;
-  } catch (e) {
-    // ignore and fall back to plaintext compare below
-  }
+  // So sánh mật khẩu hash
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) throw new Error('Invalid password');
 
-  // Fallback: if DB stored plaintext (local dev), allow direct equality
-  if (Password === customer.Password) return customer;
+  // Cập nhật lastLogin
+  await pool.query(`UPDATE user SET lastLogin = NOW() WHERE userID = ?`, [
+    user.userID,
+  ]);
 
-  throw new Error('Invalid password');
+  return user;
 };
 
-// =================== Lấy danh sách khách hàng ===================
-exports.getAllCustomers = async () => {
-  const [rows] = await pool.query(`SELECT * FROM customer`);
+// =================== Lấy danh sách người dùng ===================
+exports.getAllUsers = async () => {
+  const [rows] = await pool.query(`SELECT * FROM user`);
   return rows;
 };
 
-// =================== Lấy khách hàng theo ID ===================
-exports.getCustomerById = async (id) => {
-  const [rows] = await pool.query(`SELECT * FROM customer WHERE CustomerID = ?`, [id]);
+// =================== Lấy người dùng theo ID ===================
+exports.getUserById = async (id) => {
+  const [rows] = await pool.query(`SELECT * FROM user WHERE userID = ?`, [id]);
   return rows[0];
 };
 
-// =================== Cập nhật thông tin khách hàng ===================
-exports.updateCustomer = async (id, data) => {
-  // 🧹 Xóa các field có giá trị undefined để tránh lỗi "Bind parameters must not contain undefined"
+// =================== Lấy người dùng theo email ===================
+exports.getUserByEmail = async (email) => {
+  const [rows] = await pool.query(`SELECT * FROM user WHERE email = ?`, [
+    email,
+  ]);
+  return rows[0];
+};
+
+// =================== Cập nhật thông tin người dùng ===================
+exports.updateUser = async (id, data) => {
+  // Loại bỏ field undefined
   Object.keys(data).forEach((key) => {
     if (data[key] === undefined) delete data[key];
   });
 
-  // Nếu không có trường hợp lệ => báo lỗi
   if (Object.keys(data).length === 0) {
     throw new Error('No valid fields provided for update');
   }
 
   // Tạo truy vấn động
-  const fields = Object.keys(data).map((key) => `${key} = ?`).join(', ');
+  const fields = Object.keys(data)
+    .map((key) => `${key} = ?`)
+    .join(', ');
   const values = Object.values(data);
 
   const [result] = await pool.query(
-    `UPDATE customer SET ${fields}, updatedAt = NOW() WHERE CustomerID = ?`,
+    `UPDATE user SET ${fields}, updatedAt = NOW() WHERE userID = ?`,
     [...values, id]
   );
 
   return result;
 };
 
-// =================== Xóa khách hàng ===================
-exports.deleteCustomer = async (id) => {
-  const [result] = await pool.query(`DELETE FROM customer WHERE CustomerID = ?`, [id]);
+// =================== Xóa người dùng ===================
+exports.deleteUser = async (id) => {
+  const [result] = await pool.query(`DELETE FROM user WHERE userID = ?`, [id]);
+  return result;
+};
+
+// =================== Kiểm tra role của người dùng ===================
+exports.getUserRole = async (id) => {
+  const [rows] = await pool.query(`SELECT role FROM user WHERE userID = ?`, [
+    id,
+  ]);
+  return rows[0]?.role || null;
+};
+
+// =================== Cập nhật trạng thái active ===================
+exports.updateUserStatus = async (id, isActive) => {
+  const [result] = await pool.query(
+    `UPDATE user SET isActive = ?, updatedAt = NOW() WHERE userID = ?`,
+    [isActive, id]
+  );
   return result;
 };

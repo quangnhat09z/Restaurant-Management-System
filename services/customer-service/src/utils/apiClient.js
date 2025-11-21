@@ -1,6 +1,7 @@
 // services/customer-service/src/utils/apiClient.js
 
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
+
 
 class APIClient {
   constructor(baseURL) {
@@ -68,4 +69,4 @@ class APIClient {
 // Create singleton instance
 const apiClient = new APIClient();
 
-export default apiClient;
+module.exports = apiClient;
