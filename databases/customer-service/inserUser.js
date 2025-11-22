@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const env = require('../../Backend/environment');
+const bcrypt = require('bcrypt');
 (async () => {
   const connection = await mysql.createConnection({
     host: 'localhost',
@@ -10,6 +11,9 @@ const env = require('../../Backend/environment');
 
   const batchSize = 10000; // số user chèn 1 lần
   const total = 100000; // 1 tram nghin user =)))
+  const plainPassword = 'password1@';
+
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   for (let i = 1; i <= total; i += batchSize) {
     const values = [];
@@ -18,7 +22,7 @@ const env = require('../../Backend/environment');
         `User${j}`,
         `user${j}@example.com`,
         `090${String(j).padStart(7, '0')}`,
-        'password123',
+        hashedPassword,
         `Address ${j}`,
         'user',
         true,
