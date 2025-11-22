@@ -40,6 +40,35 @@ const cacheMiddleware = (duration = 300) => {
   };
 };
 
+const clearUserCache = async (userId) => {
+  try {
+    const patterns = [
+      `user:/user/${userId}*`, // GET user by id
+      `user:/user/${userId}/role*`, // user role
+      `user:/user?*`, // danh sách user
+    //   `user:/user/*/orders*`, // user orders
+    ];
+
+    let totalCleared = 0;
+
+    for (const pattern of patterns) {
+      const keys = await redisClient.keys(pattern);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+        totalCleared += keys.length;
+      }
+    }
+
+    console.log(
+      `🗑️ Cleared ${totalCleared} user cache keys for user ${userId}`
+    );
+  } catch (err) {
+    console.error('Error clearing user cache:', err);
+  }
+};
+
 module.exports = {
   cacheMiddleware,
+  clearCache,
+  clearUserCache,
 };
