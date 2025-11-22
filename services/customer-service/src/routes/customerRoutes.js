@@ -7,10 +7,19 @@ const {
   validateUpdate,
   validateUpdateStatus,
 } = require('../validators/customerValidator');
- 
-const {validationMiddleware}= require('../middleware/validation')
+
+const { validationMiddleware } = require('../middleware/validation');
+const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 
 // Đăng ký người dùng
+
+const CACHE_DURATION = {
+  LIST: 3600,
+  DETAIL: 3600,
+  ROLE: 3600,
+  // ORDERS: 3600,
+};
+
 router.post(
   '/register',
   validationMiddleware(validateRegister),
@@ -24,20 +33,28 @@ router.post(
   userController.loginUser
 );
 
-
-
-
 //Admin
 
-
 // Lấy danh sách người dùng
-router.get('/', userController.getAllUsers);
+router.get(
+  '/',
+  cacheMiddleware(CACHE_DURATION.LIST),
+  userController.getAllUsers
+);
 
 // Lấy người dùng theo ID
-router.get('/:id', userController.getUserById);
+router.get(
+  '/:id',
+  cacheMiddleware(CACHE_DURATION.DETAIL),
+  userController.getUserById
+);
 
 // Lấy role của người dùng
-router.get('/:id/role', userController.getUserRole);
+router.get(
+  '/:id/role',
+  cacheMiddleware(CACHE_DURATION.ROLE),
+  userController.getUserRole
+);
 
 // Cập nhật thông tin người dùng
 router.put(
@@ -57,7 +74,11 @@ router.patch(
 router.delete('/:id', userController.deleteUser);
 
 // User's orders (gọi thông qua Order Service)
-router.get('/:id/orders', userController.getUserOrders);
+router.get(
+  '/:id/orders',
+  // cacheMiddleware(CACHE_DURATION.ORDER),
+  userController.getUserOrders
+);
 router.post('/:id/orders', userController.createUserOrder);
 
 module.exports = router;
