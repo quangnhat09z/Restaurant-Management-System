@@ -1,56 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { LoadingSpinner, Skelleton } from '../../imports';
-import { useDarkMode } from '../../context/DarkModeContext'; // Import useDarkMode
-import api from '../../api/axiosInstance';
+import { useDarkMode } from '../../context/DarkModeContext';
+import { useOrderContext } from '../../context/OrderContext'; // ✅ SỬ DỤNG CONTEXT
 
 function Orders() {
-  const [orderItems, setOrderItems] = useState([]);
-  const [fetchError, setFetchError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const { darkMode } = useDarkMode(); // Get darkMode state
+  const { darkMode } = useDarkMode();
+  const { orderItems, fetchOrders, loading: contextLoading, fetchError } = useOrderContext(); // ✅ LẤY DỮ LIỆU TỪ CONTEXT
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
   useEffect(() => {
-    // Simulate data fetching
+    // Fetch orders khi component mount
+    fetchOrders();
+    
+    // Simulate skeleton loading
     const timer = setTimeout(() => {
-      setLoading(false); // Hide spinner/skeleton after "loading"
+      setShowSkeleton(false);
     }, 2000);
 
-    return () => clearTimeout(timer); // Cleanup
-  }, []);
-
-  useEffect(() => {
-    api.get('/api/orders')
-      .then(response => {
-        const data = response.data;
-        console.log('Fetched order items:', data);
-        // Handle different response formats
-        const orderData = data.orders || data.data || data || [];
-        setOrderItems(Array.isArray(orderData) ? orderData : []);
-      })
-      .catch(error => {
-        console.error('Error fetching order items:', error);
-        setFetchError('Failed to fetch order items.');
-      });
-  }, []);
+    return () => clearTimeout(timer);
+  }, [fetchOrders]);
 
   return (
-    <div className={`p-4 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}> {/* Apply background and text color */}
-      {loading ? (
+    <div className={`p-4 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+      {showSkeleton || contextLoading ? (
         <div>
-          <LoadingSpinner />  {/* Display spinner while loading */}
-          <Skelleton />        {/* Display skeleton screen */}
+          <LoadingSpinner />
+          <Skelleton />
         </div>
       ) : (
         <div className="content">
           <div className="kitchen-dashboard p-8">
-            <h1 className="text-3xl font-semibold mb-6">Order Items</h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-semibold">Order Items</h1>
+              <button
+                onClick={fetchOrders}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200"
+              >
+                🔄 Refresh
+              </button>
+            </div>
+            
             {fetchError ? (
               <p className="text-red-600">{fetchError}</p>
             ) : orderItems.length === 0 ? (
               <p className="text-gray-600">No order items available.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className={`min-w-full shadow-md rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}> {/* Change table background color */}
+                <table className={`min-w-full shadow-md rounded-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                   <thead>
                     <tr className="bg-pink-400 text-white">
                       <th className="p-4 text-left">Table Number</th>
@@ -66,13 +62,12 @@ function Orders() {
                         return order.Cart.map((item, itemIndex) => (
                           <tr 
                             key={`${groupIndex}-${orderIndex}-${itemIndex}`} 
-                            className={`border-b ${itemIndex === 0 ? 'border-t-4 border-gray' : ''} ${darkMode ? 'bg-gray-700' : 'bg-white'}`} // Row background color
+                            className={`border-b ${itemIndex === 0 ? 'border-t-4 border-gray' : ''} ${darkMode ? 'bg-gray-700' : 'bg-white'}`}
                           >
-                            {/* Render the Table Number cell only on the first item of each order */}
                             {itemIndex === 0 && (
                               <td
-                                className={`p-4 text-center font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-800'}`} // Cell text color
-                                rowSpan={order.Cart.length} // Span the number of items in the Cart
+                                className={`p-4 text-center font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}
+                                rowSpan={order.Cart.length}
                               >
                                 {order.TableNumber}
                               </td>
@@ -82,10 +77,10 @@ function Orders() {
                             <td className={`${darkMode ? 'text-gray-200' : 'text-gray-800'} p-4`}>{item.Quantity}</td>
                             {itemIndex === 0 && (
                               <td
-                                className={`text-center font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-800'} p-4`} // Cell text color
-                                rowSpan={order.Cart.length} // Span the number of items in the Cart
+                                className={`text-center font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-800'} p-4`}
+                                rowSpan={order.Cart.length}
                               >
-                                <button className="p-2 bg-green-500">Placed</button>
+                                <button className="p-2 bg-green-500 text-white rounded">Placed</button>
                               </td>
                             )}
                           </tr>

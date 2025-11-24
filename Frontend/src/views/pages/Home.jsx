@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Cart, Itemframes, Customers } from '../../imports';
 import api from '../../api/axiosInstance';
 import { useDarkMode } from '../../context/DarkModeContext';
+import { useOrderContext } from '../../context/OrderContext';
 
 function Home() {
   const { darkMode } = useDarkMode();
+  const { fetchOrders } = useOrderContext();
   const [cartItems, setCartItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -33,12 +36,41 @@ function Home() {
   };
 
   async function placeOrder(order) {
+    setIsSubmitting(true);
+    
     try {
-      await api.post('/api/orders', [order]);
+      console.log('Placing order:', order);
+      
+      // ✅ FIX: Gửi object trực tiếp, không wrap trong array
+      const response = await api.post('/api/orders', order);
+      
+      console.log('✅ Order placed successfully:', response.data);
+      
       clearcart();
-      alert('Order Placed Successfully \nThank You for Ordering');
+      closeModal();
+      
+      // Refresh orders list
+      setTimeout(() => {
+        if (fetchOrders) {
+          fetchOrders();
+          console.log('Orders list refreshed');
+        }
+      }, 500);
+      
+      alert('Order Placed Successfully \n✅ Thank You for Ordering');
+      
     } catch (error) {
-      console.error(error);
+      console.error('❌ Error placing order:', error);
+      console.error('Error details:', error.response?.data);
+      
+      let errorMessage = 'Failed to place order.';
+      if (error.response?.data) {
+        errorMessage += `\n\n${JSON.stringify(error.response.data, null, 2)}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -64,7 +96,7 @@ function Home() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content - Items */}
           <div className="flex-1">
-            <Itemframes addToCart={addToCart} />
+            <Itemframes addToCart={addToCart} darkMode={darkMode} />
           </div>
 
           {/* Sidebar - Cart */}
@@ -75,10 +107,13 @@ function Home() {
               } rounded-lg shadow-lg p-4`}
             >
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Cart</h2>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Giỏ hàng
+                </h2>
                 <button
                   onClick={clearcart}
-                  className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition duration-300"
+                  disabled={isSubmitting}
+                  className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition duration-300 disabled:opacity-50"
                 >
                   Clear
                 </button>
@@ -89,9 +124,10 @@ function Home() {
               <div className="mt-4">
                 <button
                   onClick={checker}
-                  className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 font-semibold"
+                  disabled={isSubmitting}
+                  className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm Order
+                  {isSubmitting ? '⏳ Processing...' : 'Confirm Order'}
                 </button>
               </div>
             </div>

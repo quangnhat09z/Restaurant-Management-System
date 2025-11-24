@@ -1,3 +1,4 @@
+CREATE DATABASE restaurant_menu;
 USE restaurant_menu;
 
 DROP TABLE IF EXISTS recipes;

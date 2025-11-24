@@ -18,9 +18,11 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem('rms_user');
   }, [user]);
 
-  const login = async ({ Email, Password }) => {
+  const login = async (payload) => {
     try {
-      const res = await api.post('/api/customers/login', { Email, Password });
+      const email = payload.email || payload.Email;
+      const password = payload.password || payload.Password;
+      const res = await api.post('/api/customers/login', { email, password });
       // Expect { message, customer }
       const customer = res.data.customer || res.data;
       const u = { username: customer.customerName || customer.CustomerName, id: customer.CustomerID || customer.id, token: 'local-dev-token' };
@@ -47,11 +49,17 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async ({ customerName, Email, ContactNumber, Password, Address }) => {
+  const register = async (payload) => {
     try {
-      const res = await api.post('/api/customers/register', { customerName, Email, ContactNumber, Password, Address });
+      const userName = payload.userName || payload.customerName || payload.fullName;
+      const email = payload.email || payload.Email;
+      const contactNumber = payload.contactNumber || payload.ContactNumber;
+      const password = payload.password || payload.Password;
+      const address = payload.address || payload.Address;
+
+      const res = await api.post('/api/customers/register', { userName, email, contactNumber, password, address });
       // backend returns insert id; after register, attempt to login
-      await login({ Email, Password });
+      await login({ email, password });
       return res.data;
     } catch (err) {
       const resp = err?.response;

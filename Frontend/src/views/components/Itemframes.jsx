@@ -1,24 +1,24 @@
 import { useContext, useEffect, useState } from 'react';
-import { FavoriteContext } from '../../context/FavoriteContext'; // Import FavoriteContext
+import { FavoriteContext } from '../../context/FavoriteContext';
+import { useDarkMode } from '../../context/DarkModeContext'; // THÊM DÒNG NÀY
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'; // Solid heart
-import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'; // Regular heart
+import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import api from '../../api/axiosInstance';
 
 const ItemFrames = ({ addToCart }) => {
   const { favoriteItems, addToFavorites, removeFromFavorites } =
-    useContext(FavoriteContext); // Use FavoriteContext
+    useContext(FavoriteContext);
+  const { darkMode } = useDarkMode(); // THÊM DÒNG NÀY
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     console.log('Itemframes: Fetching from /api/menu...');
-    // Fetch menu from API - use /api/menu endpoint
     api.get('/api/menu')
       .then((response) => {
         console.log('Itemframes: API response:', response.data);
-        // Handle pagination structure from API
         let menuData = [];
         if (response.data?.data && Array.isArray(response.data.data)) {
           menuData = response.data.data;
@@ -38,15 +38,15 @@ const ItemFrames = ({ addToCart }) => {
 
   const toggleFavorite = (item) => {
     if (favoriteItems.some((fav) => fav.id === item.id)) {
-      removeFromFavorites(item.id); // Remove from favorites if it exists
+      removeFromFavorites(item.id);
     } else {
-      addToFavorites(item); // Add to favorites
+      addToFavorites(item);
     }
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+      <div className={`p-5 text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         <p>Loading menu items...</p>
       </div>
     );
@@ -54,16 +54,16 @@ const ItemFrames = ({ addToCart }) => {
 
   if (error) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+      <div className="p-5 text-center text-red-500">
         <p>⚠️ {error}</p>
-        <p style={{ fontSize: '12px', marginTop: '10px' }}>Debug: Check browser console (F12)</p>
+        <p className="text-xs mt-2">Debug: Check browser console (F12)</p>
       </div>
     );
   }
 
   if (!items || items.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+      <div className={`p-5 text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         <p>No menu items available</p>
       </div>
     );
@@ -74,15 +74,29 @@ const ItemFrames = ({ addToCart }) => {
       {items.map((item) => (
         <div
           key={item.id || Math.random()}
-          className="menu-item bg-white shadow-lg rounded-lg p-4 transform transition duration-300 hover:scale-105 hover:shadow-xl"
+          className={`menu-item shadow-lg rounded-lg p-4 transform transition duration-300 hover:scale-105 hover:shadow-xl ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}
         >
           <img
             src={item.image}
             alt={item.name}
             className="w-full h-40 object-cover rounded-t-lg"
           />
-          <h3 className="text-xl font-semibold mt-2">{item.name}</h3>
-          <p className="text-lg font-medium text-gray-700">₹ {item.price}</p>
+          
+          {/* FIX: Tên món - thêm màu cho dark mode */}
+          <h3 className={`text-xl font-semibold mt-2 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            {item.name}
+          </h3>
+          
+          {/* FIX: Giá - thêm màu cho dark mode */}
+          <p className={`text-lg font-medium ${
+            darkMode ? 'text-gray-300' : 'text-gray-700'
+          }`}>
+            ₹ {item.price}
+          </p>
 
           <button
             onClick={() => addToCart(item)}
@@ -92,8 +106,8 @@ const ItemFrames = ({ addToCart }) => {
           </button>
 
           <button
-            onClick={() => toggleFavorite(item)} // Toggle favorite on button click
-            className="mt-2 text-lg ml-2" // Add margin-left for spacing
+            onClick={() => toggleFavorite(item)}
+            className="mt-2 text-lg ml-2"
             aria-label={
               favoriteItems.some((fav) => fav.id === item.id)
                 ? 'Unfavorite this item'
@@ -109,7 +123,7 @@ const ItemFrames = ({ addToCart }) => {
               className={`transition duration-200 ${
                 favoriteItems.some((fav) => fav.id === item.id)
                   ? 'text-red-500'
-                  : 'text-gray-300'
+                  : darkMode ? 'text-gray-500' : 'text-gray-300'
               }`}
             />
           </button>
@@ -119,4 +133,4 @@ const ItemFrames = ({ addToCart }) => {
   );
 };
 
-export default ItemFrames;
+export default ItemFrames
