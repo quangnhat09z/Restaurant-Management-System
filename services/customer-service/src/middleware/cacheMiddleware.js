@@ -40,17 +40,28 @@ const cacheMiddleware = (duration = 300) => {
   };
 };
 
+const clearCache = async (pattern = 'user:*') => {
+  try {
+    const keys = await redisClient.keys(pattern);
+    console.log(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      console.log(`Cleared ${keys.length} cache keys matching: ${pattern}`);
+    }
+  } catch (err) {
+    console.error('Error clearing cache:', err);
+  }
+};
+
+// Clear cache theo pattern
 const clearUserCache = async (userId) => {
   try {
     const patterns = [
-      `user:/user/${userId}*`, // GET user by id
-      `user:/user/${userId}/role*`, // user role
-      `user:/user?*`, // danh sách user
-    //   `user:/user/*/orders*`, // user orders
+      `user:/${userId}*`, // Chi tiết user theo ID
+      'user:/', // list gốc
     ];
 
     let totalCleared = 0;
-
     for (const pattern of patterns) {
       const keys = await redisClient.keys(pattern);
       if (keys.length > 0) {
@@ -59,13 +70,12 @@ const clearUserCache = async (userId) => {
       }
     }
 
-    console.log(
-      `🗑️ Cleared ${totalCleared} user cache keys for user ${userId}`
-    );
+    console.log(`🗑️ Cleared ${totalCleared} cache keys for menu/${menuId}`);
   } catch (err) {
-    console.error('Error clearing user cache:', err);
+    console.error('Error clearing menu cache:', err);
   }
 };
+
 
 module.exports = {
   cacheMiddleware,

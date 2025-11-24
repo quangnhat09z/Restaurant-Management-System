@@ -1,10 +1,15 @@
 const userService = require('../services/customerService');
 // const apiClient = require('../utils/apiClient');
+const { clearCache, clearUserCache } = require('../middleware/cacheMiddleware');
 
 const UserController = {
   async registerUser(req, res) {
     try {
       const id = await userService.registerUser(req.body);
+
+      // Clear cache cho menu cụ thể và danh sách
+      await clearCache('user:*');
+
       res.status(201).json({ message: 'User registered successfully', id });
     } catch (err) {
       console.error('Register error:', err);
@@ -61,9 +66,12 @@ const UserController = {
   async updateUser(req, res) {
     try {
       const updated = await userService.updateUser(req.params.id, req.body);
-      if (updated)
+      if (updated) {
+        // Clear cache cho menu cụ thể và danh sách
+        await clearUserCache(req.params.id);
+
         res.status(200).json({ message: 'User updated successfully' });
-      else res.status(404).json({ error: 'User not found' });
+      } else res.status(404).json({ error: 'User not found' });
     } catch (err) {
       console.error('UpdateUser error:', err);
       res.status(500).json({ error: 'Internal server error' });
@@ -73,9 +81,12 @@ const UserController = {
   async deleteUser(req, res) {
     try {
       const deleted = await userService.deleteUser(req.params.id);
-      if (deleted)
+      if (deleted) {
+        // Clear cache cho menu cụ thể và danh sách
+        await clearUserCache(req.params.id);
+
         res.status(200).json({ message: 'User deleted successfully' });
-      else res.status(404).json({ error: 'User not found' });
+      } else res.status(404).json({ error: 'User not found' });
     } catch (err) {
       console.error('DeleteUser error:', err);
       res.status(500).json({ error: 'Internal server error' });
@@ -93,6 +104,10 @@ const UserController = {
       }
 
       await userService.updateUserStatus(id, isActive);
+
+      // Clear cache khi thay đổi trạng thái
+      await clearUserCache(id);
+      
       res.status(200).json({
         message: 'User status updated successfully',
         isActive: isActive,
