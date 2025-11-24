@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS bill (
     INDEX idx_contact (ContactNumber)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Chạy lệnh mới này nhé để thêm cột CustomerID cho bảng bill: 
+USE restaurant_orders;
+ALTER TABLE bill ADD COLUMN CustomerID INT NULL;
+CREATE INDEX idx_customer ON bill (CustomerID);
+
+ALTER TABLE bill MODIFY COLUMN CustomerID INT NULL AFTER OrderID;
+
 -- Table: item
 CREATE TABLE IF NOT EXISTS item (
     ItemID INT PRIMARY KEY AUTO_INCREMENT,
