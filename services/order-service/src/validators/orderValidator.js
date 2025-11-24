@@ -11,13 +11,13 @@ const orderItemSchema = Joi.object({
 });
 
 const orderSchema = Joi.object({
-  CustomerID: Joi.number()
+  UserID: Joi.number()
     .integer()
     .min(1) 
     .required()
     .messages({
-      'number.min': 'CustomerID must be at least 1',
-      'any.required': 'CustomerID is required'
+      'number.min': 'UserID must be at least 1',
+      'any.required': 'UserID is required'
     }),
   ContactNumber: Joi.string()
     .pattern(/^[0-9]{10,15}$/)
@@ -36,14 +36,14 @@ const orderSchema = Joi.object({
       'number.max': 'Table number cannot exceed 100',
       'any.required': 'Table number is required'
     }),
-  CustomerName: Joi.string()
+  UserName: Joi.string()
     .min(2)
     .max(100)
     .required()
     .messages({
-      'string.min': 'Customer name must be at least 2 characters',
-      'string.max': 'Customer name cannot exceed 100 characters',
-      'any.required': 'Customer name is required'
+      'string.min': 'User name must be at least 2 characters',
+      'string.max': 'User name cannot exceed 100 characters',
+      'any.required': 'User name is required'
     }),
   Cart: Joi.array()
     .items(orderItemSchema)

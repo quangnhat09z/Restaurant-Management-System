@@ -4,7 +4,7 @@ const db = require('../database/db');
 
 class OrderService {
   async createOrder(orderData) {
-    const {CustomerID, ContactNumber, TableNumber, CustomerName, Cart } = orderData;
+    const {UserID, ContactNumber, TableNumber, UserName, Cart } = orderData;
 
     const connection = await db.getConnection();
 
@@ -18,9 +18,9 @@ class OrderService {
 
       // Insert into bill table with prepared statement
       const [billResult] = await connection.query(
-        `INSERT INTO bill (customerID, CustomerName, ContactNumber, TotalPrice, OrderStatus, CreatedAt) 
+        `INSERT INTO bill (UserID, UserName, ContactNumber, TotalPrice, OrderStatus, CreatedAt) 
          VALUES (?, ?, ?, ?, ?, NOW())`,
-        [CustomerID, CustomerName, ContactNumber, TotalPrice, 'pending']
+        [UserID, UserName, ContactNumber, TotalPrice, 'pending']
       );
 
       const OrderID = billResult.insertId;
@@ -41,8 +41,8 @@ class OrderService {
 
       return {
         OrderID,
-        CustomerID,
-        CustomerName,
+        UserID,
+        UserName,
         ContactNumber,
         TotalPrice,
         TableNumber,
@@ -64,8 +64,8 @@ class OrderService {
     let query = `
       SELECT 
         b.OrderID, 
-        b.CustomerID,
-        b.CustomerName,
+        b.UserID,
+        b.UserName,
         b.ContactNumber, 
         b.TotalPrice, 
         b.OrderStatus,
@@ -117,8 +117,8 @@ class OrderService {
     const [orders] = await db.query(
       `SELECT 
         b.OrderID, 
-        b.customerID,
-        b.CustomerName, 
+        b.userID,
+        b.UserName, 
         b.ContactNumber, 
         b.TotalPrice, 
         b.OrderStatus,
@@ -145,10 +145,10 @@ class OrderService {
     return order;
   }
 
-  async getOrderByCustomerID(customerID) {
+  async getOrderByUserID(userID) {
     const [orders] = await db.query(
-      `SELECT * FROM bill WHERE customerID = ?`,
-      [customerID]
+      `SELECT * FROM bill WHERE userID = ?`,
+      [userID]
     );
 
     if (orders.length === 0) {

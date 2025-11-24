@@ -206,10 +206,11 @@ const UserController = {
         ...orderData,
         UserID: id,
         UserName: user.userName,
-        ContactNumber: user.ContactNumber,
+        ContactNumber: user.contactNumber,
       };
 
       // Call Order Service via API Gateway
+      console.log('Gọi Order Service với dữ liệu:', completeOrderData);
       const orderResult = await apiClient.post(
         '/api/orders',
         completeOrderData

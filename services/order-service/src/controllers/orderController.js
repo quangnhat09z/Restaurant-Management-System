@@ -61,15 +61,15 @@ class OrderController {
     }
   }
 
-  async getOrderByCustomerID(req, res, next) {
+  async getOrderByUserID(req, res, next) {
     try {
-      const { customerID } = req.params;
-      const order = await orderService.getOrderByCustomerID(customerID);
+      const { userID } = req.params;
+      const order = await orderService.getOrderByUserID(userID);
 
       if (!order) {
         return res.status(404).json({
           success: false,
-          error: 'CustomerID not found'
+          error: 'UserID not found'
         });
       }
 
