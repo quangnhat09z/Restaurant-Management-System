@@ -1,5 +1,5 @@
 const userService = require('../services/customerService');
-// const apiClient = require('../utils/apiClient');
+const apiClient = require('../utils/apiClient');
 const { clearCache, clearUserCache } = require('../middleware/cacheMiddleware');
 
 const UserController = {

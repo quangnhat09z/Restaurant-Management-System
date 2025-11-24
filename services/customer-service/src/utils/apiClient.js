@@ -1,6 +1,8 @@
 // services/customer-service/src/utils/apiClient.js
 
-const fetch = require('node-fetch');
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 
 
 class APIClient {
