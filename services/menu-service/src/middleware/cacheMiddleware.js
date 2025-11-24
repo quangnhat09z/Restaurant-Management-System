@@ -11,9 +11,9 @@ const cacheMiddleware = (duration = 300) => {
     // Tạo cache key chuẩn hóa, bao gồm cả sorted query params
     const sortedQuery = Object.keys(req.query)
       .sort()
-      .map(key => `${key}=${req.query[key]}`)
+      .map((key) => `${key}=${req.query[key]}`)
       .join('&');
-    
+
     const key = `menu:${req.path}${sortedQuery ? '?' + sortedQuery : ''}`;
 
     try {
@@ -45,7 +45,7 @@ const cacheMiddleware = (duration = 300) => {
 // Clear cache theo pattern
 const clearCache = async (pattern = 'menu:*') => {
   try {
-    const keys = await redisClient.keys(pattern); 
+    const keys = await redisClient.keys(pattern);
     console.log(pattern);
     if (keys.length > 0) {
       await redisClient.del(keys);
@@ -56,15 +56,12 @@ const clearCache = async (pattern = 'menu:*') => {
   }
 };
 
-
-
 const clearMenuCache = async (menuId) => {
   try {
-    // Clear cache cho menu cụ thể và tất cả list/filter
     const patterns = [
-      `menu:/menu/${menuId}*`,  // Chi tiết menu
-      'menu:/menu?*',            // List với pagination
-      'menu:/menu/filter*'       // Filter queries
+      `menu:/${menuId}*`, // Chi tiết menu theo ID
+      'menu:/', // list gốc
+      'menu:/filter*', // Filter queries
     ];
 
     let totalCleared = 0;
@@ -75,8 +72,8 @@ const clearMenuCache = async (menuId) => {
         totalCleared += keys.length;
       }
     }
-    
-    console.log(`🗑️ Cleared ${totalCleared} cache keys for menu ${menuId}`);
+
+    console.log(`🗑️ Cleared ${totalCleared} cache keys for menu/${menuId}`);
   } catch (err) {
     console.error('Error clearing menu cache:', err);
   }
