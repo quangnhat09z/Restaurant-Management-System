@@ -1,0 +1,97 @@
+// frontend/src/components/OrderCard.jsx
+import React from 'react';
+
+const OrderCard = ({ order, onStatusChange, darkMode }) => {
+  const statusColors = {
+    pending: 'bg-yellow-500',
+    preparing: 'bg-blue-500',
+    ready: 'bg-green-500',
+    delivered: 'bg-gray-500',
+    cancelled: 'bg-red-500'
+  };
+
+  const handleStatusChange = (newStatus) => {
+    if (window.confirm(`Change order to ${newStatus}?`)) {
+      onStatusChange(order.OrderID, newStatus);
+    }
+  };
+
+  return (
+    <div className={`rounded-lg shadow-lg p-6 mb-4 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Order #{order.OrderID}
+          </h3>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {new Date(order.CreatedAt).toLocaleString('vi-VN')}
+          </p>
+        </div>
+        <span className={`${statusColors[order.OrderStatus]} text-white px-4 py-2 rounded-full text-sm font-semibold`}>
+          {order.OrderStatus.toUpperCase()}
+        </span>
+      </div>
+
+      {/* Customer Info */}
+      <div className={`grid grid-cols-2 gap-4 mb-4 pb-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer</p>
+          <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            {order.CustomerName}
+          </p>
+        </div>
+        <div>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Table</p>
+          <p className={`font-semibold text-2xl ${darkMode ? 'text-pink-400' : 'text-pink-600'}`}>
+            #{order.TableNumber}
+          </p>
+        </div>
+      </div>
+
+      {/* Items */}
+      <div className="mb-4">
+        <h4 className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Items ({order.Items.length})
+        </h4>
+        {order.Items.map((item, index) => (
+          <div 
+            key={index}
+            className={`flex justify-between p-3 rounded mb-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
+          >
+            <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+              {item.ItemName} x{item.Quantity}
+            </span>
+            <span className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {(item.Price * item.Quantity).toLocaleString('vi-VN')}đ
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      {order.OrderStatus !== 'delivered' && (
+        <div className="flex gap-2">
+          {order.OrderStatus === 'pending' && (
+            <button
+              onClick={() => handleStatusChange('preparing')}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+            >
+              Start Preparing
+            </button>
+          )}
+          {order.OrderStatus === 'preparing' && (
+            <button
+              onClick={() => handleStatusChange('ready')}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded"
+            >
+              Mark Ready
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OrderCard;
