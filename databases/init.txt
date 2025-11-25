@@ -1,0 +1,68 @@
+CREATE DATABASE restaurant_orders;
+USE restaurant_orders;
+
+CREATE TABLE IF NOT EXISTS bill (
+    OrderID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT NULL,
+    UserName VARCHAR(100) NOT NULL,
+    ContactNumber VARCHAR(15) NOT NULL,
+    TotalPrice DECIMAL(10, 2) NOT NULL,
+    OrderStatus ENUM('pending', 'preparing', 'ready', 'delivered', 'cancelled') DEFAULT 'pending',
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (OrderStatus),
+    INDEX idx_created (CreatedAt),
+    INDEX idx_contact (ContactNumber)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table: item
+CREATE TABLE IF NOT EXISTS item (
+    ItemID INT PRIMARY KEY AUTO_INCREMENT,
+    OrderID INT NOT NULL,
+    ItemName VARCHAR(100) NOT NULL,
+    TableNumber INT NOT NULL,
+    Quantity INT NOT NULL,
+    Price DECIMAL(10, 2) NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (OrderID) REFERENCES bill(OrderID) ON DELETE CASCADE,
+    INDEX idx_order (OrderID),
+    INDEX idx_table (TableNumber)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE DATABASE IF NOT EXISTS restaurant_menu;
+USE restaurant_menu;
+CREATE TABLE recipes (
+  id INT PRIMARY KEY,
+  name VARCHAR(255),
+  ingredients JSON,
+  instructions JSON,
+  prepTimeMinutes INT,
+  cookTimeMinutes INT,
+  servings INT,
+  difficulty VARCHAR(50),
+  cuisine VARCHAR(100),
+  caloriesPerServing INT,
+  tags JSON,
+  userId INT,
+  image VARCHAR(255),
+  rating FLOAT,
+  reviewCount INT,
+  mealType JSON,
+  price INT
+);
+
+create database restaurant_user;
+USE restaurant_user;
+CREATE TABLE IF NOT EXISTS user (
+    userID INT AUTO_INCREMENT PRIMARY KEY,
+    userName VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    contactNumber VARCHAR(20) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    address VARCHAR(255),
+    role ENUM('admin', 'user') DEFAULT 'user',
+    isActive BOOLEAN DEFAULT TRUE,
+    lastLogin DATETIME,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
