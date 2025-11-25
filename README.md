@@ -33,7 +33,8 @@ The Restaurant Management System is a full-stack application designed to manage 
 
 ### Database Setup
 
-Import the SQL database files located in the /sql directory into your MySQL server.
+Import the SQL database files located in the **_init.txt_** directory into your MySQL server.
+Chage DEV_USER = YOUR_NAME
 
 ### Backend Setup
 1. Clone the repository:
