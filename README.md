@@ -1,11 +1,6 @@
 
 # Restaurant Management System
 
-## Hacktoberfest 2024
-[![Hacktoberfest 2024](https://img.shields.io/badge/Hacktoberfest-2024-ff6f00?style=flat-square&logo=hacktoberfest&logoColor=white&labelColor=000000)](https://hacktoberfest.digitalocean.com/)
-
-This repository is participating in Hacktoberfest 2024. Contributions are welcome! Please fork the repository and create a pull request for any improvements or bug fixes.Please refer to **CONTRIBUTING.md** before submitting a pull request.
-
 ## Overview
 The Restaurant Management System is a full-stack application designed to manage restaurant operations efficiently. It includes features for handling orders, managing the menu, and processing payments.
 
@@ -43,16 +38,16 @@ Import the SQL database files located in the /sql directory into your MySQL serv
 ### Backend Setup
 1. Clone the repository:
    ```sh
-   git clone https://github.com/Ayu-hack/Restaurant-Management-System.git
-   cd Restaurant-Management-System/Backend
+   git clone https://github.com/quangnhat09z/Restaurant-Management-System.git
+   cd Restaurant-Management-System/services
    ```
 2. Install dependencies:
    ```sh
    npm install
    ```
 3. Start the backend server:
-   ```sh
-   npm start
+   ```sh 
+   npm run start:all
    ```
 
 ### Frontend Setup
