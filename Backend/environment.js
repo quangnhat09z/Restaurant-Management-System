@@ -21,6 +21,7 @@ const environment = {
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: process.env.REDIS_PORT,
   
+  
 };
 // console.log(environment);
 
