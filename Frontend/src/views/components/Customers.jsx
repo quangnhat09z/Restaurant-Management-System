@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { useDarkMode } from '../../context/DarkModeContext'; 
+import { useDarkMode } from '../../context/DarkModeContext';
+import { useAuth } from '../../context/AuthContext'; 
 
 export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
     const { darkMode } = useDarkMode();
+    const { user } = useAuth();
 
     // ✅ Thêm CustomerID vào state
-    const [customerID, setCustomerID] = useState('');
-    const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
     const [tableNumber, setTableNumber] = useState('');
     const [error, setError] = useState(null);
+
+    // Debug: Log user info
+    console.log('🧑 Customers Component - User:', user);
 
     if (!isOpen) return null;
 
@@ -17,35 +19,31 @@ export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
         e.preventDefault();
         
         // ✅ Validation đầy đủ
-        if (!customerID.trim()) {
-            return setError('Customer ID is required.');
-        }
-        if (!name.trim()) {
-            return setError('Name is required.');
-        }
-        if (!phoneNumber.trim()) {
-            return setError('Phone number is required.');
-        }
         if (!tableNumber.trim()) {
             return setError('Table number is required.');
         }
 
+        console.log('🧑 Current user object:', user);
+        
+        if (!user?.id) {
+            return setError('User not logged in. Please refresh and login again.');
+        }
+
         // ✅ Tạo order object theo đúng format backend yêu cầu
+        // Format: { TableNumber, Cart: [{ id, Quantity }] }
         const orderDetails = {
-            CustomerID: customerID.trim(),
-            CustomerName: name.trim(),
-            ContactNumber: phoneNumber.trim(),
-            TableNumber: parseInt(tableNumber.trim()) || tableNumber.trim(),
-            Cart: cartItems,
+            TableNumber: parseInt(tableNumber.trim()),
+            Cart: cartItems.map(item => ({
+                id: item.id,
+                Quantity: item.Quantity
+            }))
         };
         
         console.log('Submitting order from modal:', orderDetails);
-        onSubmit(orderDetails);
+        console.log('User ID:', user.id);
+        onSubmit(orderDetails, user.id);
         
         // Reset form
-        setCustomerID('');
-        setName('');
-        setPhoneNumber('');
         setTableNumber('');
         setError(null);
     };
@@ -85,7 +83,7 @@ export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     
                     {/* ✅ Input 1: Customer ID (REQUIRED) */}
-                    <div>
+                    {/* <div>
                         <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Customer ID <span className="text-red-500">*</span>
                         </label>
@@ -96,10 +94,10 @@ export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
                             value={customerID}
                             onChange={(e) => setCustomerID(e.target.value)}
                         />
-                    </div>
+                    </div> */}
                     
                     {/* Input 2: Name */}
-                    <div>
+                    {/* <div>
                         <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Name <span className="text-red-500">*</span>
                         </label>
@@ -110,10 +108,10 @@ export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
-                    </div>
+                    </div> */}
                     
                     {/* Input 3: Phone Number */}
-                    <div>
+                    {/* <div>
                         <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Phone Number <span className="text-red-500">*</span>
                         </label>
@@ -124,7 +122,7 @@ export default function Customers({ isOpen, onClose, onSubmit, cartItems }) {
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                         />
-                    </div>
+                    </div> */}
                     
                     {/* Input 4: Table Number */}
                     <div>

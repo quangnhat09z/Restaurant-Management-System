@@ -23,9 +23,19 @@ export function AuthProvider({ children }) {
       const email = payload.email || payload.Email;
       const password = payload.password || payload.Password;
       const res = await api.post('/api/customers/login', { email, password });
-      // Expect { message, customer }
-      const customer = res.data.customer || res.data;
-      const u = { username: customer.customerName || customer.CustomerName, id: customer.CustomerID || customer.id, token: 'local-dev-token' };
+      
+      // API response structure: { message, user: { userName, userID, ... } }
+      console.log('🧑‍💻 Login API response:', res.data);
+      
+      const userFromApi = res.data.user || res.data;
+      
+      const u = { 
+        username: userFromApi.userName,
+        id: userFromApi.userID,
+        token: 'local-dev-token' 
+      };
+      
+      console.log('✅ Setting user to context:', u);
       setUser(u);
       return u;
     } catch (err) {

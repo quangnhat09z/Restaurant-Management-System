@@ -27,7 +27,7 @@ const Cart = ({ cartItems }) => {
                 <tr key={index} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <td className="py-2">{item.name}</td>
                   <td className="py-2">{item.Quantity}x</td>
-                  <td className="py-2">₹{item.price * item.Quantity}</td>
+                  <td className="py-2">{item.price * item.Quantity}đ</td>
                 </tr>
               ))}
             </tbody>
@@ -35,7 +35,7 @@ const Cart = ({ cartItems }) => {
         </div>
       )}
 
-      <h3 className="text-xl font-semibold mt-4">Total: ₹{total}</h3>
+      <h3 className="text-xl font-semibold mt-4">Total: {total}đ</h3>
     </div>
   );
 };

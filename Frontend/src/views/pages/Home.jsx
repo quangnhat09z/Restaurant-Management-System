@@ -29,20 +29,23 @@ function Home() {
         }
         return cartItem;
       });
+      console.log('Updated Cart Items:', updatedCartItems);
       setCartItems(updatedCartItems);
     } else {
       setCartItems([...cartItems, { ...item, Quantity: quantityToAdd }]);
     }
   };
 
-  async function placeOrder(order) {
+  async function placeOrder(order, userID) {
     setIsSubmitting(true);
     
     try {
       console.log('Placing order:', order);
+      console.log('User ID:', userID);
       
-      // ✅ FIX: Gửi object trực tiếp, không wrap trong array
-      const response = await api.post('/api/orders', order);
+      // ✅ Call new API: POST /api/customers/${userID}/orders
+      // Body format: { TableNumber, Cart: [{ id, Quantity }] }
+      const response = await api.post(`/api/customers/${userID}/orders`, order);
       
       console.log('✅ Order placed successfully:', response.data);
       
@@ -57,7 +60,7 @@ function Home() {
         }
       }, 500);
       
-      alert('Order Placed Successfully \n✅ Thank You for Ordering');
+      alert('Order Placed Successfully \n Thank You for Ordering');
       
     } catch (error) {
       console.error('❌ Error placing order:', error);

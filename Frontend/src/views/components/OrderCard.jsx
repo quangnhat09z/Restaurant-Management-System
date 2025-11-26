@@ -1,7 +1,11 @@
 // frontend/src/components/OrderCard.jsx
-import React from 'react';
+import React, { useState } from 'react';
+import api from '../../api/axiosInstance';
 
 const OrderCard = ({ order, onStatusChange, darkMode }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState(null);
+
   const statusColors = {
     pending: 'bg-yellow-500',
     preparing: 'bg-blue-500',
@@ -10,9 +14,34 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
     cancelled: 'bg-red-500'
   };
 
-  const handleStatusChange = (newStatus) => {
-    if (window.confirm(`Change order to ${newStatus}?`)) {
+  const handleStatusChange = async (newStatus) => {
+    if (!window.confirm(`Change order to ${newStatus}?`)) {
+      return;
+    }
+
+    setIsUpdating(true);
+    setUpdateError(null);
+
+    try {
+      // Gọi API để cập nhật status
+      const response = await api.patch(`/api/orders/${order.OrderID}/status`, {
+        status: newStatus
+      });
+
+      console.log('✅ Order status updated:', response.data);
+
+      // Cập nhật UI bằng callback từ parent
       onStatusChange(order.OrderID, newStatus);
+
+      // Hiển thị thông báo thành công
+      alert(`Order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update order status';
+      setUpdateError(errorMessage);
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -38,13 +67,13 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
         <div>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer</p>
           <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {order.CustomerName}
+            {order.UserName}
           </p>
         </div>
         <div>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Table</p>
           <p className={`font-semibold text-2xl ${darkMode ? 'text-pink-400' : 'text-pink-600'}`}>
-            #{order.TableNumber}
+            #{order.Items[0].TableNumber}
           </p>
         </div>
       </div>
@@ -72,20 +101,27 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
       {/* Actions */}
       {order.OrderStatus !== 'delivered' && (
         <div className="flex gap-2">
+          {updateError && (
+            <div className="w-full text-red-600 text-sm mb-2">
+              ⚠️ {updateError}
+            </div>
+          )}
           {order.OrderStatus === 'pending' && (
             <button
               onClick={() => handleStatusChange('preparing')}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+              disabled={isUpdating}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Start Preparing
+              {isUpdating ? '⏳ Updating...' : 'Start Preparing'}
             </button>
           )}
           {order.OrderStatus === 'preparing' && (
             <button
               onClick={() => handleStatusChange('ready')}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded"
+              disabled={isUpdating}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Mark Ready
+              {isUpdating ? '⏳ Updating...' : 'Mark Ready'}
             </button>
           )}
         </div>

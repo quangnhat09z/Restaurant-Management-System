@@ -49,7 +49,7 @@ const FavoriteItems = () => {
               <p className={`text-lg font-medium ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                ₹ {item.price}
+                {item.price}đ
               </p>
             </div>
           ))}

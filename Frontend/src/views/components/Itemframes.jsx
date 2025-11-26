@@ -95,11 +95,11 @@ const ItemFrames = ({ addToCart }) => {
           <p className={`text-lg font-medium ${
             darkMode ? 'text-gray-300' : 'text-gray-700'
           }`}>
-            ₹ {item.price}
+            {item.price}đ
           </p>
 
           <button
-            onClick={() => addToCart(item)}
+            onClick={() => addToCart({ id: item.id, name: item.name, price: item.price })}
             className="mt-4 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 hover:scale-110 transition duration-200 transform focus:outline-none focus:ring-2 focus:ring-pink-300"
           >
             Add to Cart
