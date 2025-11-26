@@ -1,9 +1,9 @@
 const pool = require('../database/db');
 
 async function getAllMenus(page, limit) {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 10;
-  const offset = (pageNum - 1) * limitNum;
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 12; // Đặt thành 12
+  const offset = (pageNum - 1) * limitNum;
 
   // Lấy dữ liệu phân trang
   const [rows] = await pool.query('SELECT * FROM recipes LIMIT ? OFFSET ?', [
