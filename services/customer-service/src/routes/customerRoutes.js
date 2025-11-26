@@ -1,3 +1,4 @@
+// services/customer-service/src/routes/customerRoutes.js
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/customerController');
@@ -10,14 +11,16 @@ const {
 
 const { validationMiddleware } = require('../middleware/validation');
 const { cacheMiddleware } = require('../middleware/cacheMiddleware');
-
-// Đăng ký người dùng
+const {
+  authenticateToken,
+  authorizeRole,
+  authorizeUserOrAdmin,
+} = require('../middleware/authMiddleware');
 
 const CACHE_DURATION = {
   LIST: 3600,
   DETAIL: 3600,
   ROLE: 3600,
-  // ORDERS: 3600,
 };
 
 router.post(
@@ -26,59 +29,75 @@ router.post(
   userController.registerUser
 );
 
-// Đăng nhập người dùng
 router.post(
   '/login',
   validationMiddleware(validateLogin),
   userController.loginUser
 );
 
-//Admin
+router.post('/refresh-token', userController.refreshToken);
 
-// Lấy danh sách người dùng
+router.post('/logout', authenticateToken, userController.logoutUser);
+
 router.get(
   '/',
+  authenticateToken,
+  authorizeRole('admin'),
   cacheMiddleware(CACHE_DURATION.LIST),
   userController.getAllUsers
 );
 
-// Lấy người dùng theo ID
 router.get(
   '/:id',
+  authenticateToken,
+  authorizeUserOrAdmin,
   cacheMiddleware(CACHE_DURATION.DETAIL),
   userController.getUserById
 );
 
-// Lấy role của người dùng
 router.get(
   '/:id/role',
+  authenticateToken,
+  authorizeRole('admin'),
   cacheMiddleware(CACHE_DURATION.ROLE),
   userController.getUserRole
 );
 
-// Cập nhật thông tin người dùng
 router.put(
   '/:id',
+  authenticateToken,
+  authorizeUserOrAdmin,
   validationMiddleware(validateUpdate),
   userController.updateUser
 );
 
-// Cập nhật trạng thái active của người dùng
 router.patch(
   '/:id/status',
+  authenticateToken,
+  authorizeRole('admin'),
   validationMiddleware(validateUpdateStatus),
   userController.updateUserStatus
 );
 
-// Xóa người dùng
-router.delete('/:id', userController.deleteUser);
+router.delete(
+  '/:id',
+  authenticateToken,
+  authorizeRole('admin'),
+  userController.deleteUser
+);
 
-// User's orders (gọi thông qua Order Service)
 router.get(
   '/:id/orders',
-  // cacheMiddleware(CACHE_DURATION.ORDER),
+  authenticateToken,
+  authorizeUserOrAdmin,
   userController.getUserOrders
 );
-router.post('/:id/orders', userController.createUserOrder);
+
+router.post(
+  '/:id/orders',
+  authenticateToken,
+  authorizeUserOrAdmin,
+  userController.createUserOrder
+);
 
 module.exports = router;
