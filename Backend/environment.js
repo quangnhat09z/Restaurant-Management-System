@@ -20,8 +20,8 @@ const environment = {
   PORT_MENU: process.env.PORT_MENU,
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: process.env.REDIS_PORT,
-  
-  
+  ACCESS_TOKEN_EXPIRY: process.ACCESS_TOKEN_EXPIRY,
+  REFRESH_TOKEN_EXPIRY: process.REFRESH_TOKEN_EXPIRY,
 };
 // console.log(environment);
 
