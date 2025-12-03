@@ -22,3 +22,6 @@ CREATE TABLE IF NOT EXISTS user (
 );
 
 
+UPDATE user
+SET role = 'admin'
+WHERE userID = 1;

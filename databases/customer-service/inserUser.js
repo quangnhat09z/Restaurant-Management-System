@@ -9,8 +9,8 @@ const bcrypt = require('bcrypt');
     database: 'restaurant_user',
   });
 
-  const batchSize = 10000; // số user chèn 1 lần
-  const total = 100000; // 1 tram nghin user =)))
+  const batchSize = 500; // số user chèn 1 lần
+  const total = 10000; // 1  nghin user =)))
   const plainPassword = 'password1@';
 
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
