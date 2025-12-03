@@ -13,17 +13,17 @@ const CACHE_DURATION = {
 // GET routes với cache
 router.get(
   '/filter',
-  cacheMiddleware(CACHE_DURATION.FILTER_TIME),
+  // cacheMiddleware(CACHE_DURATION.FILTER_TIME),
   MenuController.filterMenus
 );
 router.get(
   '/',
-  cacheMiddleware(CACHE_DURATION.LIST_TIME),
+  // cacheMiddleware(CACHE_DURATION.LIST_TIME),
   MenuController.getAllMenu
 );
 router.get(
   '/:id',
-  cacheMiddleware(CACHE_DURATION.DETAIL_TIME),
+  // cacheMiddleware(CACHE_DURATION.DETAIL_TIME),
   MenuController.getMenuById
 );
 

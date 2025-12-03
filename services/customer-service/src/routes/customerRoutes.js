@@ -41,25 +41,25 @@ router.post('/logout', authenticateToken, userController.logoutUser);
 
 router.get(
   '/',
-  authenticateToken,
-  authorizeRole('admin'),
-  cacheMiddleware(CACHE_DURATION.LIST),
+  // authenticateToken,
+  // authorizeRole('admin'),
+  // cacheMiddleware(CACHE_DURATION.LIST),
   userController.getAllUsers
 );
 
 router.get(
   '/:id',
-  authenticateToken,
-  authorizeUserOrAdmin,
-  cacheMiddleware(CACHE_DURATION.DETAIL),
+  // authenticateToken,
+  // authorizeUserOrAdmin,
+  // cacheMiddleware(CACHE_DURATION.DETAIL),
   userController.getUserById
 );
 
 router.get(
   '/:id/role',
-  authenticateToken,
-  authorizeRole('admin'),
-  cacheMiddleware(CACHE_DURATION.ROLE),
+  // authenticateToken,
+  // authorizeRole('admin'),
+  // cacheMiddleware(CACHE_DURATION.ROLE),
   userController.getUserRole
 );
 
@@ -88,15 +88,15 @@ router.delete(
 
 router.get(
   '/:id/orders',
-  authenticateToken,
-  authorizeUserOrAdmin,
+  // authenticateToken,
+  // authorizeUserOrAdmin,
   userController.getUserOrders
 );
 
 router.post(
   '/:id/orders',
-  authenticateToken,
-  authorizeUserOrAdmin,
+  // authenticateToken,
+  // authorizeUserOrAdmin,
   userController.createUserOrder
 );
 
