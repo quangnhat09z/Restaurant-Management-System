@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test-ws": "wscat -c ws://localhost:3001/ws"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,10 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "joi": "^18.0.1"
+    "joi": "^18.0.1",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "wscat": "^6.1.0"
   }
 }

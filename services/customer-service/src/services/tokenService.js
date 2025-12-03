@@ -5,7 +5,7 @@ const env = require('../../../../Backend/environment');
 
 const JWT_SECRET = env.JWT_SECRET || 'your-secret-key';
 const REFRESH_SECRET = env.REFRESH_SECRET || 'your-refresh-secret-key';
-const ACCESS_TOKEN_EXPIRY = env.ACCESS_TOKEN_EXPIRY || '15m';
+const ACCESS_TOKEN_EXPIRY = env.ACCESS_TOKEN_EXPIRY || '60m';
 const REFRESH_TOKEN_EXPIRY = env.REFRESH_TOKEN_EXPIRY || '7d';
 
 // Tạo Access Token

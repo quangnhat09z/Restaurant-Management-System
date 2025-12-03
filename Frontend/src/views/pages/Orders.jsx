@@ -4,6 +4,9 @@ import { useOrderContext } from '../../context/OrderContext';
 import { useDarkMode } from '../../context/DarkModeContext';
 import OrderCard from '../components/OrderCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { requestNotificationPermission } from '../../utils/notifications';
+
+
 
 // StatCard Component
 const StatCard = ({ label, value, color, darkMode }) => {
@@ -24,10 +27,22 @@ const StatCard = ({ label, value, color, darkMode }) => {
 
 function Orders() {
   const { darkMode } = useDarkMode();
-  const { orders, loading, error, fetchOrders, updateOrderStatus } = useOrderContext();
+  const { 
+    orders, 
+    loading, 
+    error, 
+    wsConnected, 
+    wsError,
+    fetchOrders, 
+    updateOrderStatus 
+  } = useOrderContext();
   const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
+    // Request notification permission
+    requestNotificationPermission();
+    
+    // Fetch initial orders
     fetchOrders();
   }, [fetchOrders]);
 
@@ -47,15 +62,29 @@ function Orders() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Kitchen Dashboard
-          </h1>
+          <div>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Kitchen Dashboard
+            </h1>
+            {/* WebSocket Status Indicator */}
+            <div className="flex items-center gap-2 mt-2">
+              <div className={`w-3 h-3 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {wsConnected ? '🟢 Live Updates Active' : '🔴 Reconnecting...'}
+              </span>
+            </div>
+            {wsError && (
+              <p className="text-red-500 text-sm mt-1">{wsError}</p>
+            )}
+          </div>
+          
           <button
             onClick={() => fetchOrders()}
             disabled={loading}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg"
+            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center gap-2 disabled:opacity-50"
           >
-            {loading ? 'Loading...' : '🔄 Refresh'}
+            <span>🔄</span>
+            <span>{loading ? 'Loading...' : 'Refresh'}</span>
           </button>
         </div>
 
@@ -68,17 +97,17 @@ function Orders() {
         </div>
 
         {/* Filter */}
-        <div className="flex gap-2 mb-6">
-          {['all', 'pending', 'preparing', 'ready'].map(status => (
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {['all', 'pending', 'preparing', 'ready', 'delivered'].map(status => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg transition whitespace-nowrap ${
                 filterStatus === status
                   ? 'bg-pink-500 text-white'
                   : darkMode
-                  ? 'bg-gray-800 text-gray-300'
-                  : 'bg-white text-gray-700'
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -90,12 +119,20 @@ function Orders() {
         {loading ? (
           <LoadingSpinner />
         ) : error ? (
-          <div className="text-red-600 p-6 bg-red-50 rounded-lg">
-            ❌ {error}
+          <div className={`p-6 rounded-lg ${darkMode ? 'bg-red-900/20' : 'bg-red-50'}`}>
+            <p className="text-red-600 font-semibold">❌ {error}</p>
+            <button
+              onClick={() => fetchOrders()}
+              className="mt-2 text-red-600 hover:text-red-700 underline"
+            >
+              Try again
+            </button>
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center p-12">
-            <p className="text-xl text-gray-600">No orders found</p>
+          <div className={`p-12 text-center rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <p className={`text-xl ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              📋 No orders found
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

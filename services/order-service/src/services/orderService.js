@@ -1,10 +1,11 @@
 // services/order-service/src/services/orderService.js
 // ===================================
 const db = require('../database/db');
+const wsServer = require('../websocket/OrderWebSocket'); // ADD THIS
 
 class OrderService {
   async createOrder(orderData) {
-    const {UserID, ContactNumber, TableNumber, UserName, Cart } = orderData;
+    const { UserID, ContactNumber, TableNumber, UserName, Cart } = orderData;
 
     const connection = await db.getConnection();
 
@@ -37,9 +38,8 @@ class OrderService {
       await Promise.all(itemPromises);
       await connection.commit();
 
-      console.log(`✅ Order created successfully: OrderID ${OrderID}`);
 
-      return {
+      const newOrder = {
         OrderID,
         UserID,
         UserName,
@@ -50,6 +50,14 @@ class OrderService {
         Items: Cart,
         CreatedAt: new Date()
       };
+
+      console.log(`✅ Order created successfully: OrderID ${OrderID}`);
+
+      // 🔔 BROADCAST NEW ORDER (ADD THIS)
+      wsServer.notifyNewOrder(newOrder);
+
+      return newOrder;
+
     } catch (error) {
       await connection.rollback();
       console.error('❌ Order creation failed:', error);
@@ -158,22 +166,38 @@ class OrderService {
     return orders;
   }
 
-  async updateOrderStatus(id, status) {
+  async updateOrderStatus(id, newStatus) {
+    // Get old status first
+    const [orders] = await db.query(
+      'SELECT OrderStatus FROM bill WHERE OrderID = ?',
+      [id]
+    );
+
+    if (orders.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    const oldStatus = orders[0].OrderStatus;
+
+    // Update status
     const [result] = await db.query(
       'UPDATE bill SET OrderStatus = ?, UpdatedAt = NOW() WHERE OrderID = ?',
-      [status, id]
+      [newStatus, id]
     );
 
     if (result.affectedRows === 0) {
       throw new Error('Order not found');
     }
 
-    console.log(`✅ Order ${id} status updated to: ${status}`);
-    return { OrderID: id, OrderStatus: status };
+    console.log(`✅ Order ${id} status updated: ${oldStatus} → ${newStatus}`);
+
+    // 🔔 BROADCAST STATUS CHANGE (ADD THIS)
+    wsServer.notifyOrderStatusChanged(id, oldStatus, newStatus);
+
+    return { OrderID: id, OrderStatus: newStatus };
   }
 
   async deleteOrder(id) {
-    // Items will be deleted automatically due to CASCADE
     const [result] = await db.query(
       'DELETE FROM bill WHERE OrderID = ?',
       [id]
@@ -184,8 +208,13 @@ class OrderService {
     }
 
     console.log(`✅ Order ${id} deleted successfully`);
+
+    // 🔔 BROADCAST ORDER CANCELLED (ADD THIS)
+    wsServer.notifyOrderCancelled(id);
+
     return { OrderID: id, deleted: true };
   }
+
 }
 
 module.exports = new OrderService();
