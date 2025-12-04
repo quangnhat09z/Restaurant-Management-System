@@ -7,7 +7,12 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const serviceRegistry = require('./config/serviceRegistry');
-const rateLimiter = require('./middleware/rateLimiter');
+const { 
+  generalLimiter, 
+  postThrottler, 
+  orderThrottler,
+  speedLimiter 
+}= require('./middleware/throttling'); // UPDATED
 const errorHandler = require('./utils/errorHandler');
 const healthRoutes = require('./routes/healthRoutes');
 const setupOrderRoutes = require('./routes/orderRoutes');
@@ -26,6 +31,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Enable-Claude']
 }));
 
+// Layer 1: General rate limiting (apply to all)
+app.use(generalLimiter);
+
+// Layer 2: POST request throttling (apply to all POST)
+app.use(postThrottler);
+
+// Layer 3: Speed limiter (gradual slowdown)
+app.use(speedLimiter);
+
 
 app.use((req, res, next) => {
   // Skip body parsing cho proxy routes
@@ -39,8 +53,7 @@ app.use((req, res, next) => {
 
 app.use(morgan('dev'));
 
-// Rate limiting
-app.use(rateLimiter);
+
 
 // Root route
 app.get('/', (req, res) => {
@@ -52,7 +65,13 @@ app.get('/', (req, res) => {
       customer:'/api/customers',
       health: '/health',
       services_health: '/health/services'
+    },
+    rateLimit: {
+      general: '100 requests / 15 minutes',
+      post: '10 POST requests / minute',
+      orders: '5 orders / minute'
     }
+
   });
 });
 

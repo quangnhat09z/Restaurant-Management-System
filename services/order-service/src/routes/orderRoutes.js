@@ -3,6 +3,11 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
+const {
+  preventDuplicateOrder,
+  userOrderLimiter,
+  tableOrderLimiter
+} = require('../middleware/orderThrottling'); // NEW
 
 // Create new order
 // http://localhost:3001/orders/
@@ -28,7 +33,12 @@ const orderController = require('../controllers/orderController');
     ]
   }
   */
-router.post('/', orderController.createOrder);
+router.post('/',
+  preventDuplicateOrder,     // Check duplicate
+  userOrderLimiter,          // Per-user limit
+  tableOrderLimiter,         // Per-table limit
+  orderController.createOrder
+);
 
 // Get all orders (with pagination and filtering)
 // http://localhost:3001/orders/
@@ -44,7 +54,9 @@ router.get('/:id', orderController.getOrderById);
 /*
     {"status": "cancelled"}
 */
-router.patch('/:id/status', orderController.updateOrderStatus);
+router.patch('/:id/status',
+  userOrderLimiter, // Prevent rapid status changes
+  orderController.updateOrderStatus);
 
 // Delete order
 // http://localhost:3001/orders/1
@@ -52,6 +64,8 @@ router.delete('/:id', orderController.deleteOrder);
 
 // Get order by userID
 // http://localhost:3001/orders/user/7
-router.get('/user/:userID', orderController.getOrderByUserID);
+router.get('/user/:userID',
+  userOrderLimiter,
+  orderController.getOrderByUserID);
 
 module.exports = router;
