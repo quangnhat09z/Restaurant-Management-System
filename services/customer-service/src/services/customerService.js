@@ -1,5 +1,6 @@
 const pool = require('../database/db');
 const bcrypt = require('bcrypt');
+const cqrsService = require('./cqrsService');
 
 // =================== Đăng ký người dùng ===================
 exports.registerUser = async (userData) => {
@@ -10,101 +11,79 @@ exports.registerUser = async (userData) => {
   // Mã hóa mật khẩu
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const [result] = await pool.query(
-    `INSERT INTO user (userName, email, contactNumber, password, address, role, isActive, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, 'user', TRUE, NOW(), NOW())`,
-    [userName, email, contactNumber, hashedPassword, address]
-  );
+  // Ghi vào Write Store (CQRS)
+  const userID = await cqrsService.writeUser({
+    userName,
+    email,
+    contactNumber,
+    password: hashedPassword,
+    address,
+    role: 'user',
+  });
 
-  return result.insertId;
+  return userID;
 };
 
 // =================== Đăng nhập người dùng ===================
 exports.loginUser = async ({ email, password }) => {
-  const [rows] = await pool.query(
-    `SELECT * FROM user WHERE email = ? AND isActive = TRUE`,
-    [email]
-  );
-  const user = rows[0];
+  // Đọc từ Read Store (tối ưu cho query)
+  const user = await cqrsService.readUserByEmail(email);
 
   if (!user) throw new Error('User not found or account inactive');
 
+  // Lấy password từ Write Store để so sánh
+  const [writeRows] = await pool.query(
+    `SELECT password FROM user_write WHERE userID = ? AND isActive = TRUE`,
+    [user.userID]
+  );
+  const writeUser = writeRows[0];
+
+  if (!writeUser) throw new Error('User not found in write store');
+
   // So sánh mật khẩu hash
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  const isPasswordValid = await bcrypt.compare(password, writeUser.password);
   if (!isPasswordValid) throw new Error('Invalid password');
 
-  // Cập nhật lastLogin
-  await pool.query(`UPDATE user SET lastLogin = NOW() WHERE userID = ?`, [
-    user.userID,
-  ]);
+  // Cập nhật lastLogin vào Write Store
+  await cqrsService.updateWriteUser(user.userID, {
+    lastLogin: new Date(),
+  });
 
   return user;
 };
 
 // =================== Lấy danh sách người dùng ===================
-exports.getAllUsers = async () => {
-  const [rows] = await pool.query(`SELECT * FROM user`);
-  return rows;
+exports.getAllUsers = async (page = 1, limit = 10, filters = {}) => {
+  return await cqrsService.readAllUsers(page, limit, filters);
 };
 
 // =================== Lấy người dùng theo ID ===================
 exports.getUserById = async (id) => {
-  const [rows] = await pool.query(`SELECT * FROM user WHERE userID = ?`, [id]);
-  return rows[0];
+  return await cqrsService.readUserById(id);
 };
 
 // =================== Lấy người dùng theo email ===================
 exports.getUserByEmail = async (email) => {
-  const [rows] = await pool.query(`SELECT * FROM user WHERE email = ?`, [
-    email,
-  ]);
-  return rows[0];
+  return await cqrsService.readUserByEmail(email);
 };
 
 // =================== Cập nhật thông tin người dùng ===================
 exports.updateUser = async (id, data) => {
-  // Loại bỏ field undefined
-  Object.keys(data).forEach((key) => {
-    if (data[key] === undefined) delete data[key];
-  });
-
-  if (Object.keys(data).length === 0) {
-    throw new Error('No valid fields provided for update');
-  }
-
-  // Tạo truy vấn động
-  const fields = Object.keys(data)
-    .map((key) => `${key} = ?`)
-    .join(', ');
-  const values = Object.values(data);
-
-  const [result] = await pool.query(
-    `UPDATE user SET ${fields}, updatedAt = NOW() WHERE userID = ?`,
-    [...values, id]
-  );
-
-  return result;
+  return await cqrsService.updateWriteUser(id, data);
 };
 
 // =================== Xóa người dùng ===================
 exports.deleteUser = async (id) => {
-  const [result] = await pool.query(`DELETE FROM user WHERE userID = ?`, [id]);
-  return result;
+  return await cqrsService.deleteWriteUser(id);
 };
 
 // =================== Kiểm tra role của người dùng ===================
 exports.getUserRole = async (id) => {
-  const [rows] = await pool.query(`SELECT role FROM user WHERE userID = ?`, [
-    id,
-  ]);
-  return rows[0]?.role || null;
+  const user = await cqrsService.readUserById(id);
+  return user?.role || null;
 };
 
 // =================== Cập nhật trạng thái active ===================
 exports.updateUserStatus = async (id, isActive) => {
-  const [result] = await pool.query(
-    `UPDATE user SET isActive = ?, updatedAt = NOW() WHERE userID = ?`,
-    [isActive, id]
-  );
-  return result;
+  return await cqrsService.updateWriteUser(id, { isActive });
 };

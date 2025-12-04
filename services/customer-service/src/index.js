@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const customerRoutes = require('../src/routes/customerRoutes');
 const errorHandler = require('./utils/errorHandler');
+const SyncJobManager = require('./jobs/syncJob');
 
 const app = express();
 const PORT = env.PORT_CUSTOMER || 3003;
@@ -30,6 +31,14 @@ app.get('/health', (req, res) => {
   });
 });
 
+// CQRS Sync Status
+app.get('/cqrs/sync-status', (req, res) => {
+  res.status(200).json({
+    status: SyncJobManager.getSyncStatus(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Customer-service not found' });
@@ -42,5 +51,22 @@ app.listen(PORT, () => {
   console.log(`✅ Customer Service running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 Customer API: http://localhost:${PORT}/customers`);
+  console.log(`📊 CQRS Status: http://localhost:${PORT}/cqrs/sync-status`);
   console.log('----------------');
+
+  // Khởi động CQRS Sync Job
+  SyncJobManager.startSyncJob();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('📴 SIGTERM received, shutting down gracefully...');
+  SyncJobManager.stopSyncJob();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('\n📴 SIGINT received, shutting down gracefully...');
+  SyncJobManager.stopSyncJob();
+  process.exit(0);
 });

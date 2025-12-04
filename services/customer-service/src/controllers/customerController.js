@@ -2,6 +2,8 @@
 const userService = require('../services/customerService');
 const tokenService = require('../services/tokenService');
 const apiClient = require('../utils/apiClient');
+const cqrsService = require('../services/cqrsService');
+const redisClient = require('../config/redisClient');
 const { clearCache, clearUserCache } = require('../middleware/cacheMiddleware');
 
 const UserController = {
@@ -112,21 +114,70 @@ const UserController = {
 
   async getAllUsers(req, res) {
     try {
-      const users = await userService.getAllUsers();
-      const sanitized = users.map((u) => {
-        const copy = { ...u };
-        if (copy.password) delete copy.password;
-        return copy;
-      });
-      res.status(200).json({
+      const { page = 1, limit = 10, role, search } = req.query;
+      const cacheKey = `users:${page}:${limit}:${role || ''}:${search || ''}`;
+
+      // Kiểm tra cache
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        console.log(`✅ Cache HIT: ${cacheKey}`);
+        try {
+          return res.status(200).json(JSON.parse(cached));
+        } catch (parseError) {
+          console.error('❌ Cache parse error:', parseError.message);
+          // Nếu cache corrupt, xóa và tiếp tục
+          await redisClient.del(cacheKey);
+        }
+      }
+
+      console.log(`❌ Cache MISS: ${cacheKey}`);
+
+      // Lấy từ Read Store (đã tối ưu)
+      const result = await cqrsService.readAllUsers(
+        parseInt(page) || 1,
+        parseInt(limit) || 10,
+        {
+          role: role ? String(role).trim() : undefined,
+          search: search ? String(search).trim() : undefined,
+        }
+      );
+
+      // Kiểm tra result có hợp lệ không
+      if (!result || !result.data || !Array.isArray(result.data)) {
+        console.error('Invalid result from readAllUsers:', result);
+        return res.status(500).json({
+          success: false,
+          error: 'Invalid database response',
+        });
+      }
+
+      // Tạo response object
+      const response = {
         success: true,
-        data: sanitized,
-      });
-    } catch (err) {
-      console.error('GetAllUsers error:', err);
+        data: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      };
+
+      // Lưu vào cache (24h)
+      try {
+        await redisClient.setex(cacheKey, 86400, JSON.stringify(response));
+      } catch (cacheError) {
+        console.warn('⚠️ Cache set error:', cacheError.message);
+        // Tiếp tục dù cache fail
+      }
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('GetAllUsers error:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
+        message: error.message,
       });
     }
   },
@@ -437,6 +488,47 @@ const UserController = {
       }
 
       next(err);
+    }
+  },
+
+  // =================== CQRS Methods ===================
+
+  async getUserHistory(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Nếu không có authentication, chỉ cho phép xem history của chính user đó
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Authentication required to view user history',
+        });
+      }
+
+      // Kiểm tra quyền (chỉ admin hoặc chính user đó mới xem được history)
+      if (req.user.userID !== parseInt(id) && req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'You do not have permission to view this history',
+        });
+      }
+
+      const history = await cqrsService.getUserHistory(id);
+
+      res.status(200).json({
+        success: true,
+        data: history,
+        count: history.length,
+      });
+    } catch (err) {
+      console.error('Get user history error:', err);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: err.message,
+      });
     }
   },
 };

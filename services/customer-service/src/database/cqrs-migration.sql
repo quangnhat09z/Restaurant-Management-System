@@ -1,13 +1,5 @@
--- Tạo database
-CREATE DATABASE IF NOT EXISTS restaurant_user
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
--- Sử dụng database
-USE restaurant_user;
-
--- ==================== CQRS WRITE STORE ====================
--- Bảng WRITE: Lưu trữ tất cả thay đổi dữ liệu (Command)
+-- ================== CQRS Tables ==================
+-- Bảng WRITE: Lưu trữ tất cả thay đổi dữ liệu
 CREATE TABLE IF NOT EXISTS user_write (
   userID INT PRIMARY KEY AUTO_INCREMENT,
   userName VARCHAR(255) NOT NULL UNIQUE,
@@ -22,8 +14,8 @@ CREATE TABLE IF NOT EXISTS user_write (
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   -- CQRS metadata
-  commandId VARCHAR(255) UNIQUE,
-  version INT DEFAULT 1,
+  commandId VARCHAR(255) UNIQUE,  -- Để tracking lệnh (idempotency)
+  version INT DEFAULT 1,          -- Để versioning
   
   INDEX idx_user_write_email (email),
   INDEX idx_user_write_userName (userName),
@@ -31,7 +23,6 @@ CREATE TABLE IF NOT EXISTS user_write (
   INDEX idx_user_write_updatedAt (updatedAt)
 );
 
--- ==================== CQRS READ STORE ====================
 -- Bảng READ: Tối ưu cho query/read (denormalized)
 CREATE TABLE IF NOT EXISTS user_read (
   userID INT PRIMARY KEY,
@@ -52,11 +43,9 @@ CREATE TABLE IF NOT EXISTS user_read (
   INDEX idx_user_read_email (email),
   INDEX idx_user_read_userName (userName),
   INDEX idx_user_read_isActive (isActive),
-  INDEX idx_user_read_role (role),
-  FOREIGN KEY (userID) REFERENCES user_write(userID) ON DELETE CASCADE
+  INDEX idx_user_read_role (role)
 );
 
--- ==================== EVENT SOURCING ====================
 -- Event log: Để lưu lịch sử thay đổi (Event Sourcing)
 CREATE TABLE IF NOT EXISTS user_events (
   eventId INT PRIMARY KEY AUTO_INCREMENT,
@@ -73,11 +62,10 @@ CREATE TABLE IF NOT EXISTS user_events (
   INDEX idx_user_events_createdAt (createdAt)
 );
 
--- ==================== CQRS SYNC LOG ====================
 -- Sync log: Để tracking quá trình sync
 CREATE TABLE IF NOT EXISTS cqrs_sync_log (
   syncId INT PRIMARY KEY AUTO_INCREMENT,
-  syncType VARCHAR(100) NOT NULL,
+  syncType VARCHAR(100) NOT NULL,        -- 'USER_WRITE_TO_READ'
   lastSyncAt TIMESTAMP,
   currentSyncAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   totalRecordsProcessed INT DEFAULT 0,
@@ -88,8 +76,5 @@ CREATE TABLE IF NOT EXISTS cqrs_sync_log (
   INDEX idx_sync_log_currentSyncAt (currentSyncAt)
 );
 
--- ==================== MIGRATION: Copy data từ user_legacy sang CQRS (nếu cần) ====================
--- INSERT INTO user_write (userName, email, contactNumber, password, address, role, isActive, lastLogin, createdAt, updatedAt)
--- SELECT userName, email, contactNumber, password, address, role, isActive, lastLogin, createdAt, updatedAt FROM user_legacy;
-
--- UPDATE user_write SET role = 'admin' WHERE userID = 1;
+-- Khóa ngoài cho user_read nếu cần soft delete
+ALTER TABLE user_read ADD FOREIGN KEY IF NOT EXISTS (userID) REFERENCES user_write(userID) ON DELETE CASCADE;

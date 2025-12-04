@@ -6,6 +6,12 @@ const cacheMiddleware = (duration = 300) => {
       return next();
     }
 
+    // Kiểm tra Redis có kết nối không
+    if (!redisClient || !redisClient.isOpen) {
+      console.log('⚠️  Redis not connected, skipping cache');
+      return next();
+    }
+
     // Tạo cache key chuẩn hóa, bao gồm cả sorted query params
     const sortedQuery = Object.keys(req.query)
       .sort()
@@ -26,9 +32,27 @@ const cacheMiddleware = (duration = 300) => {
 
       const originalJson = res.json.bind(res);
       res.json = (data) => {
-        redisClient.setEx(key, duration, JSON.stringify(data)).catch((err) => {
-          console.error('Error caching data:', err);
-        });
+        // ✅ FIX: Chỉ cache response success (status 200)
+        if (res.statusCode === 200 && data && data.success !== false) {
+          // Kiểm tra lại Redis trước khi cache
+          if (
+            redisClient &&
+            redisClient.isOpen &&
+            typeof redisClient.setEx === 'function'
+          ) {
+            redisClient
+              .setEx(key, duration, JSON.stringify(data))
+              .catch((err) => {
+                console.warn('⚠️  Error caching data:', err.message);
+              });
+          } else {
+            console.warn('⚠️  Redis not ready for caching');
+          }
+        } else {
+          console.log(
+            `⏭️  Skipping cache for status ${res.statusCode}: ${key}`
+          );
+        }
         return originalJson(data);
       };
 
@@ -70,12 +94,11 @@ const clearUserCache = async (userId) => {
       }
     }
 
-    console.log(`🗑️ Cleared ${totalCleared} cache keys for menu/${menuId}`);
+    console.log(`🗑️ Cleared ${totalCleared} cache keys for user/${userId}`);
   } catch (err) {
-    console.error('Error clearing menu cache:', err);
+    console.error('Error clearing user cache:', err);
   }
 };
-
 
 module.exports = {
   cacheMiddleware,
