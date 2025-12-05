@@ -1,5 +1,5 @@
 // frontend/src/pages/Orders.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useOrderContext } from '../../context/OrderContext';
 import { useDarkMode } from '../../context/DarkModeContext';
 import OrderCard from '../components/OrderCard';
@@ -31,61 +31,51 @@ function Orders() {
     orders, 
     loading, 
     error, 
+    pagination,
     wsConnected, 
     wsError,
     fetchOrders, 
     updateOrderStatus 
   } = useOrderContext();
   const [filterStatus, setFilterStatus] = useState('all');
-  const [pagination, setPagination] = useState({
+  const [paginationLocal, setPaginationLocal] = useState({
     page: 1,
     totalPages: 1,
     total: 0,
     limit: 10
   });
-  const [allOrders, setAllOrders] = useState([]);
 
   useEffect(() => {
     // Request notification permission
     requestNotificationPermission();
     
-    // Fetch initial orders with pagination
-    fetchOrdersWithPagination(1);
-  }, []);
-
-  // Hàm gọi API với phân trang
-  const fetchOrdersWithPagination = async (page = 1) => {
-    try {
-      const response = await fetch(`http://localhost:3001/orders?page=${page}&limit=10`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setAllOrders(data.data);
-        setPagination(data.pagination);
-      } else {
-        setAllOrders([]);
-      }
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-    }
-  };
+    // Fetch initial orders using OrderContext
+    fetchOrders(1);
+  }, [fetchOrders]);
 
   // Hàm thay đổi trang
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
-      fetchOrdersWithPagination(newPage);
+  const handlePageChange = useCallback((newPage) => {
+    if (newPage >= 1 && newPage <= (paginationLocal?.totalPages || 1)) {
+      fetchOrders(newPage);
     }
-  };
+  }, [fetchOrders, paginationLocal?.totalPages]);
+
+  // Update local pagination when context pagination changes
+  useEffect(() => {
+    if (pagination) {
+      setPaginationLocal(pagination);
+    }
+  }, [pagination]);
 
   const filteredOrders = filterStatus === 'all' 
-    ? allOrders 
-    : allOrders.filter(order => order.OrderStatus === filterStatus);
+    ? orders 
+    : orders.filter(order => order.OrderStatus === filterStatus);
 
   const stats = {
-    pending: allOrders.filter(o => o.OrderStatus === 'pending').length,
-    preparing: allOrders.filter(o => o.OrderStatus === 'preparing').length,
-    ready: allOrders.filter(o => o.OrderStatus === 'ready').length,
-    total: pagination.total
+    pending: orders.filter(o => o.OrderStatus === 'pending').length,
+    preparing: orders.filter(o => o.OrderStatus === 'preparing').length,
+    ready: orders.filter(o => o.OrderStatus === 'ready').length,
+    total: paginationLocal?.total || 0
   };
 
   return (
@@ -181,8 +171,8 @@ function Orders() {
             {/* Pagination Controls */}
             <div className="flex justify-center items-center mt-6 space-x-4">
               <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1 || loading}
+                onClick={() => handlePageChange(paginationLocal.page - 1)}
+                disabled={paginationLocal.page === 1 || loading}
                 className={`px-4 py-2 rounded font-semibold transition duration-200 ${
                   darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 } disabled:opacity-50`}
@@ -191,12 +181,12 @@ function Orders() {
               </button>
               
               <span className={`px-4 py-2 text-lg font-bold ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                Page {pagination.page} / {pagination.totalPages}
+                Page {paginationLocal.page} / {paginationLocal.totalPages}
               </span>
 
               <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages || loading}
+                onClick={() => handlePageChange(paginationLocal.page + 1)}
+                disabled={paginationLocal.page === paginationLocal.totalPages || loading}
                 className={`px-4 py-2 rounded font-semibold transition duration-200 ${
                   darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 } disabled:opacity-50`}
@@ -204,7 +194,7 @@ function Orders() {
                 Next &raquo;
               </button>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                ({pagination.total} total orders)
+                ({paginationLocal.total} total orders)
               </p>
             </div>
           </>

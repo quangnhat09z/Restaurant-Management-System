@@ -16,7 +16,8 @@ class OrderWebSocketServer {
 
         this.wss = new WebSocket.Server({
             server,
-            path: '/ws'
+            path: '/ws',
+            perMessageDeflate: false
         });
 
         this.wss.on('connection', (ws, req) => {

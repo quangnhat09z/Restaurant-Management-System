@@ -73,7 +73,7 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
         <div>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Table</p>
           <p className={`font-semibold text-2xl ${darkMode ? 'text-pink-400' : 'text-pink-600'}`}>
-            #{order.Items[0].TableNumber}
+            #{order.TableNumber || order.Items?.[0]?.TableNumber}
           </p>
         </div>
       </div>
@@ -89,10 +89,10 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
             className={`flex justify-between p-3 rounded mb-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
           >
             <span className={darkMode ? 'text-white' : 'text-gray-900'}>
-              {item.ItemName} x{item.Quantity}
+              {item.ItemName || item.name} x{item.Quantity}
             </span>
             <span className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              {(item.Price * item.Quantity).toLocaleString('vi-VN')}đ
+              {((item.Price || item.price) * item.Quantity).toLocaleString('vi-VN')}đ
             </span>
           </div>
         ))}
