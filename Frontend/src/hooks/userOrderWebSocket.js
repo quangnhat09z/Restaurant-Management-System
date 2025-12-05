@@ -10,6 +10,13 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
   const pingInterval = useRef(null);
+  
+  // Use refs to avoid stale closures
+  const callbacksRef = useRef({ onNewOrder, onStatusChange, onOrderCancelled });
+  
+  useEffect(() => {
+    callbacksRef.current = { onNewOrder, onStatusChange, onOrderCancelled };
+  }, [onNewOrder, onStatusChange, onOrderCancelled]);
 
   const connect = useCallback(() => {
     try {
@@ -41,8 +48,8 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
 
             case 'NEW_ORDER':
               console.log('🆕 New order received:', message.data);
-              if (onNewOrder) {
-                onNewOrder(message.data);
+              if (callbacksRef.current.onNewOrder) {
+                callbacksRef.current.onNewOrder(message.data);
               }
               // Show browser notification
               showNotification('New Order!', `Table ${message.data.TableNumber}`);
@@ -52,15 +59,15 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
 
             case 'ORDER_STATUS_CHANGED':
               console.log('🔄 Order status changed:', message.data);
-              if (onStatusChange) {
-                onStatusChange(message.data.orderId, message.data.newStatus);
+              if (callbacksRef.current.onStatusChange) {
+                callbacksRef.current.onStatusChange(message.data.orderId, message.data.newStatus);
               }
               break;
 
             case 'ORDER_CANCELLED':
               console.log('❌ Order cancelled:', message.data);
-              if (onOrderCancelled) {
-                onOrderCancelled(message.data.orderId);
+              if (callbacksRef.current.onOrderCancelled) {
+                callbacksRef.current.onOrderCancelled(message.data.orderId);
               }
               break;
 
@@ -100,7 +107,7 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
       console.error('Error creating WebSocket:', error);
       setError(error.message);
     }
-  }, [onNewOrder, onStatusChange, onOrderCancelled]);
+  }, []); // No dependencies to prevent infinite reconnects
 
   useEffect(() => {
     connect();
@@ -117,7 +124,7 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
         ws.current.close();
       }
     };
-  }, [connect]);
+  }, []); // Empty dependency array - connect only on mount
 
   return { isConnected, error };
 };

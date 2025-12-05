@@ -37,24 +37,55 @@ function Orders() {
     updateOrderStatus 
   } = useOrderContext();
   const [filterStatus, setFilterStatus] = useState('all');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    limit: 10
+  });
+  const [allOrders, setAllOrders] = useState([]);
 
   useEffect(() => {
     // Request notification permission
     requestNotificationPermission();
     
-    // Fetch initial orders
-    fetchOrders();
-  }, [fetchOrders]);
+    // Fetch initial orders with pagination
+    fetchOrdersWithPagination(1);
+  }, []);
+
+  // Hàm gọi API với phân trang
+  const fetchOrdersWithPagination = async (page = 1) => {
+    try {
+      const response = await fetch(`http://localhost:3001/orders?page=${page}&limit=10`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setAllOrders(data.data);
+        setPagination(data.pagination);
+      } else {
+        setAllOrders([]);
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+    }
+  };
+
+  // Hàm thay đổi trang
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchOrdersWithPagination(newPage);
+    }
+  };
 
   const filteredOrders = filterStatus === 'all' 
-    ? orders 
-    : orders.filter(order => order.OrderStatus === filterStatus);
+    ? allOrders 
+    : allOrders.filter(order => order.OrderStatus === filterStatus);
 
   const stats = {
-    pending: orders.filter(o => o.OrderStatus === 'pending').length,
-    preparing: orders.filter(o => o.OrderStatus === 'preparing').length,
-    ready: orders.filter(o => o.OrderStatus === 'ready').length,
-    total: orders.length
+    pending: allOrders.filter(o => o.OrderStatus === 'pending').length,
+    preparing: allOrders.filter(o => o.OrderStatus === 'preparing').length,
+    ready: allOrders.filter(o => o.OrderStatus === 'ready').length,
+    total: pagination.total
   };
 
   return (
@@ -135,16 +166,48 @@ function Orders() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredOrders.map(order => (
-              <OrderCard
-                key={order.OrderID}
-                order={order}
-                onStatusChange={updateOrderStatus}
-                darkMode={darkMode}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4">
+              {filteredOrders.map(order => (
+                <OrderCard
+                  key={order.OrderID}
+                  order={order}
+                  onStatusChange={updateOrderStatus}
+                  darkMode={darkMode}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center mt-6 space-x-4">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1 || loading}
+                className={`px-4 py-2 rounded font-semibold transition duration-200 ${
+                  darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                } disabled:opacity-50`}
+              >
+                &laquo; Previous
+              </button>
+              
+              <span className={`px-4 py-2 text-lg font-bold ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                Page {pagination.page} / {pagination.totalPages}
+              </span>
+
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages || loading}
+                className={`px-4 py-2 rounded font-semibold transition duration-200 ${
+                  darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                } disabled:opacity-50`}
+              >
+                Next &raquo;
+              </button>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                ({pagination.total} total orders)
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>
