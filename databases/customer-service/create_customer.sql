@@ -93,3 +93,24 @@ CREATE TABLE IF NOT EXISTS cqrs_sync_log (
 -- SELECT userName, email, contactNumber, password, address, role, isActive, lastLogin, createdAt, updatedAt FROM user_legacy;
 
 -- UPDATE user_write SET role = 'admin' WHERE userID = 1;
+
+
+USE restaurant_user;
+
+-- EXPLAIN ANALYZE
+-- SELECT * FROM user_read WHERE email = 'user9999@example.com';
+
+
+
+
+
+-- EXPLAIN ANALYZE
+-- SELECT * FROM user_read WHERE userName = 'User10000';
+
+
+CREATE INDEX idx_user_read_email ON user_read(email);
+CREATE INDEX idx_user_read_userName ON user_read(userName);
+CREATE INDEX idx_user_read_isActive ON user_read(isActive);
+CREATE INDEX idx_user_read_role ON user_read(role);
+CREATE INDEX idx_user_read_updatedAt ON user_read(updatedAt);
+CREATE INDEX idx_user_read_search ON user_read(userName, email);
