@@ -50,6 +50,8 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
 
       ws.current.onopen = () => {
         console.log('✅ WebSocket connected');
+        console.log('   URL:', WS_URL);
+        console.log('   ReadyState:', ws.current.readyState);
         isConnecting.current = false;
         setIsConnected(true);
         setError(null);
@@ -65,7 +67,7 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
       ws.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log('📩 WebSocket message:', message.type);
+          console.log('📩 WebSocket message:', message.type, message.data);
 
           switch (message.type) {
             case 'CONNECTED':
@@ -82,9 +84,13 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
               break;
 
             case 'ORDER_STATUS_CHANGED':
-              console.log('🔄 Order status changed:', message.data?.orderId);
+              console.log('🔄 Order status changed:', message.data?.orderId, 'to', message.data?.newStatus);
               if (callbacksRef.current.onStatusChange) {
+                console.log('   ↳ Calling onStatusChange callback...');
                 callbacksRef.current.onStatusChange(message.data.orderId, message.data.newStatus);
+                console.log('   ✅ Callback executed');
+              } else {
+                console.warn('   ⚠️ No onStatusChange callback found!');
               }
               break;
 
@@ -108,7 +114,9 @@ export const useOrderWebSocket = (onNewOrder, onStatusChange, onOrderCancelled) 
       };
 
       ws.current.onerror = (event) => {
-        console.error('❌ WebSocket error:', event?.type || 'unknown error');
+        console.error('❌ WebSocket error:', event);
+        console.error('   Error type:', event?.type || 'unknown error');
+        console.error('   Error message:', event?.message);
         isConnecting.current = false;
         setError('Failed to connect to WebSocket');
         setIsConnected(false);

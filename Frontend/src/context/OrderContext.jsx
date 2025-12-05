@@ -27,14 +27,20 @@ export const OrderProvider = ({ children }) => {
   }, []);
 
   const handleStatusChange = useCallback((orderId, newStatus) => {
-    console.log('🔄 Updating order status:', orderId, newStatus);
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.OrderID === orderId
+    console.log('🔄 [OrderContext] handleStatusChange called with orderId:', orderId, 'type:', typeof orderId, 'newStatus:', newStatus);
+    const numericOrderId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+    console.log('   Converted to numeric:', numericOrderId);
+    
+    setOrders(prevOrders => {
+      const updated = prevOrders.map(order =>
+        order.OrderID === numericOrderId
           ? { ...order, OrderStatus: newStatus }
           : order
-      )
-    );
+      );
+      const changedOrder = updated.find(o => o.OrderID === numericOrderId);
+      console.log('✅ [OrderContext] Updated. Order', numericOrderId, 'new status:', changedOrder?.OrderStatus);
+      return updated;
+    });
   }, []);
 
   const handleOrderCancelled = useCallback((orderId) => {

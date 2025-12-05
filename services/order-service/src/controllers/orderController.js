@@ -85,6 +85,7 @@ class OrderController {
   async updateOrderStatus(req, res, next) {
     try {
       const { id } = req.params;
+      const orderId = parseInt(id, 10); // Convert string to number
 
       // Validate status
       const { error, value } = validateUpdateStatus(req.body);
@@ -95,7 +96,7 @@ class OrderController {
         });
       }
 
-      const updated = await orderService.updateOrderStatus(id, value.status);
+      const updated = await orderService.updateOrderStatus(orderId, value.status);
       res.status(200).json({
         success: true,
         message: 'Order status updated successfully',

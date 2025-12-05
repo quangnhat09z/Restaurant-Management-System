@@ -6,6 +6,11 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
 
+  // Log order status for debugging
+  React.useEffect(() => {
+    console.log('📦 OrderCard rendered with order:', order.OrderID, 'Status:', order.OrderStatus);
+  }, [order]);
+
   const statusColors = {
     pending: 'bg-yellow-500',
     preparing: 'bg-blue-500',
@@ -23,15 +28,18 @@ const OrderCard = ({ order, onStatusChange, darkMode }) => {
     setUpdateError(null);
 
     try {
+      console.log('📝 Updating order:', order.OrderID, 'to status:', newStatus);
+      
       // Gọi API để cập nhật status
       const response = await api.patch(`/api/orders/${order.OrderID}/status`, {
         status: newStatus
       });
 
-      console.log('✅ Order status updated:', response.data);
+      console.log('✅ Order status updated via API:', response.data);
 
       // Cập nhật UI bằng callback từ parent
-      onStatusChange(order.OrderID, newStatus);
+      const result = await onStatusChange(order.OrderID, newStatus);
+      console.log('✅ Parent callback result:', result);
 
       // Hiển thị thông báo thành công
       alert(`Order status updated to ${newStatus}`);
