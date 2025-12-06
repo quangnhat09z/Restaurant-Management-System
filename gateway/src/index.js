@@ -1,5 +1,5 @@
 // ===================================
-// gateway/src/index.js (FIX)
+// gateway/src/index.js (UPDATED WITH PAYMENT)
 // ===================================
 const express = require('express');
 const cors = require('cors');
@@ -12,12 +12,13 @@ const {
   postThrottler, 
   orderThrottler,
   speedLimiter 
-}= require('./middleware/throttling'); // UPDATED
+} = require('./middleware/throttling');
 const errorHandler = require('./utils/errorHandler');
 const healthRoutes = require('./routes/healthRoutes');
 const setupOrderRoutes = require('./routes/orderRoutes');
 const setupMenuRoutes = require('./routes/menuRoutes');
 const setupCustomerRoutes = require('./routes/customerRoutes');
+const setupPaymentRoutes = require('./routes/paymentRoutes'); // 🆕 THÊM
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +26,7 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: '*', // Allow all origins for development
+  origin: '*',
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Enable-Claude']
@@ -40,20 +41,18 @@ app.use(postThrottler);
 // Layer 3: Speed limiter (gradual slowdown)
 app.use(speedLimiter);
 
-
 app.use((req, res, next) => {
   // Skip body parsing cho proxy routes
   if (req.path.startsWith('/api/orders') 
     || req.path.startsWith('/api/menu') 
-    || req.path.startsWith('/api/customers')) {
+    || req.path.startsWith('/api/customers')
+    || req.path.startsWith('/api/payments')) { // 🆕 THÊM
     return next();
   }
   express.json()(req, res, next);
 });
 
 app.use(morgan('dev'));
-
-
 
 // Root route
 app.get('/', (req, res) => {
@@ -62,7 +61,8 @@ app.get('/', (req, res) => {
     available_routes: {
       orders: '/api/orders',
       menu: '/api/menu',
-      customer:'/api/customers',
+      customer: '/api/customers',
+      payments: '/api/payments', // 🆕 THÊM
       health: '/health',
       services_health: '/health/services'
     },
@@ -71,7 +71,6 @@ app.get('/', (req, res) => {
       post: '10 POST requests / minute',
       orders: '5 orders / minute'
     }
-
   });
 });
 
@@ -81,6 +80,7 @@ app.use(healthRoutes);
 setupOrderRoutes(app);
 setupMenuRoutes(app);
 setupCustomerRoutes(app);
+setupPaymentRoutes(app); // 🆕 THÊM
 
 // 404 handler
 app.use((req, res) => {
@@ -102,5 +102,7 @@ app.listen(PORT, () => {
   Object.entries(serviceRegistry).forEach(([name, config]) => {
     console.log(`   - ${config.name}: ${config.url}`);
   });
+  console.log(`   - Payment Ambassador: ${process.env.PAYMENT_AMBASSADOR_URL || 'http://localhost:3004'}`); 
+  console.log(`   - Payment Service: ${process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005'}`); 
   console.log('\n');
 });

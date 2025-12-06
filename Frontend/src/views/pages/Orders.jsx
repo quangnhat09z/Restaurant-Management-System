@@ -1,12 +1,10 @@
-// frontend/src/pages/Orders.jsx
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useOrderContext } from '../../context/OrderContext';
 import { useDarkMode } from '../../context/DarkModeContext';
 import OrderCard from '../components/OrderCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { requestNotificationPermission } from '../../utils/notifications';
-
-
 
 // StatCard Component
 const StatCard = ({ label, value, color, darkMode }) => {
@@ -25,7 +23,132 @@ const StatCard = ({ label, value, color, darkMode }) => {
   );
 };
 
+// OrderCard Component với nút Payment
+const OrderCardWithPayment = ({ order, onStatusChange, darkMode, onPayment }) => {
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800',
+      preparing: darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800',
+      ready: darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800',
+      delivered: darkMode ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800',
+    };
+    return colors[status] || (darkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-100 text-gray-800');
+  };
+
+  const getNextStatus = (currentStatus) => {
+    const statusFlow = {
+      pending: 'preparing',
+      preparing: 'ready',
+      ready: 'delivered',
+      delivered: 'delivered'
+    };
+    return statusFlow[currentStatus];
+  };
+
+  const canChangeStatus = (status) => {
+    return status !== 'delivered';
+  };
+
+  const handleStatusChange = async () => {
+    const nextStatus = getNextStatus(order.OrderStatus);
+    if (nextStatus && nextStatus !== order.OrderStatus) {
+      await onStatusChange(order.OrderID, nextStatus);
+    }
+  };
+
+  return (
+    <div className={`rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Order #{order.OrderID}
+          </h3>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {new Date(order.CreatedAt).toLocaleString()}
+          </p>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getStatusColor(order.OrderStatus)}`}>
+          {order.OrderStatus}
+        </span>
+      </div>
+
+      <div className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <p className="font-semibold">Customer: {order.UserName}</p>
+        <p className="text-sm">Table: #{order.Items?.[0]?.TableNumber || 'N/A'}</p>
+      </div>
+
+      <div className="mb-4">
+        <h4 className={`font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Items ({order.Items?.length || 0})
+        </h4>
+        <ul className="space-y-1">
+          {order.Items?.map((item, idx) => (
+            <li key={idx} className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {item.ItemName} x{item.Quantity} - {(item.Price * item.Quantity).toLocaleString('vi-VN')}đ
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className={`border-t pt-4 mb-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex justify-between items-center">
+          <span className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Total:</span>
+          <span className="text-xl font-bold text-pink-500">
+            {order.TotalPrice?.toLocaleString('vi-VN')}đ
+          </span>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        {/* Nút change status */}
+        {canChangeStatus(order.OrderStatus) && order.OrderStatus !== 'ready' && (
+          <button
+            onClick={handleStatusChange}
+            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold transition"
+          >
+            {order.OrderStatus === 'pending' && '🔄 Start Preparing'}
+            {order.OrderStatus === 'preparing' && '✅ Mark as Ready'}
+          </button>
+        )}
+
+        {/* Nút Payment - CHỈ hiện khi status = ready */}
+        {order.OrderStatus === 'ready' && (
+          <button
+            onClick={() => onPayment(order.OrderID)}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+          >
+            <span>💳</span>
+            <span>Process Payment</span>
+          </button>
+        )}
+
+        {order.OrderStatus === 'delivered' && (
+          <div className="flex-1 text-center py-2 text-green-600 font-semibold">
+            ✓ Completed & Paid
+          </div>
+        )}
+      </div>
+
+      {/* Payment Status Badge */}
+      {order.PaymentStatus && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className={`text-xs px-2 py-1 rounded ${
+            order.PaymentStatus === 'completed' 
+              ? 'bg-green-100 text-green-800' 
+              : order.PaymentStatus === 'processing'
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            Payment: {order.PaymentStatus}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 function Orders() {
+  const navigate = useNavigate();
   const { darkMode } = useDarkMode();
   const { 
     orders, 
@@ -46,26 +169,26 @@ function Orders() {
   });
 
   useEffect(() => {
-    // Request notification permission
     requestNotificationPermission();
-    
-    // Fetch initial orders using OrderContext
     fetchOrders(1);
   }, [fetchOrders]);
 
-  // Hàm thay đổi trang
   const handlePageChange = useCallback((newPage) => {
     if (newPage >= 1 && newPage <= (paginationLocal?.totalPages || 1)) {
       fetchOrders(newPage);
     }
   }, [fetchOrders, paginationLocal?.totalPages]);
 
-  // Update local pagination when context pagination changes
   useEffect(() => {
     if (pagination) {
       setPaginationLocal(pagination);
     }
   }, [pagination]);
+
+  // Handler để redirect sang payment page
+  const handlePayment = (orderId) => {
+    navigate(`/payment/${orderId}`);
+  };
 
   const filteredOrders = filterStatus === 'all' 
     ? orders 
@@ -87,7 +210,6 @@ function Orders() {
             <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Kitchen Dashboard
             </h1>
-            {/* WebSocket Status Indicator */}
             <div className="flex items-center gap-2 mt-2">
               <div className={`w-3 h-3 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -159,10 +281,11 @@ function Orders() {
           <>
             <div className="space-y-4">
               {filteredOrders.map(order => (
-                <OrderCard
+                <OrderCardWithPayment
                   key={order.OrderID}
                   order={order}
                   onStatusChange={updateOrderStatus}
+                  onPayment={handlePayment}
                   darkMode={darkMode}
                 />
               ))}
