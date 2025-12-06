@@ -6,18 +6,25 @@
     "start:order": "cd order-service && npm start",
     "start:menu": "cd menu-service && npm start",
     "start:customer": "cd customer-service && npm start",
-    "start:all": "npm-run-all --parallel start:order start:menu start:customer",
+    "start:payment-service": "cd payment-service && npm start",
+    "start:payment-ambassador": "cd payment-ambassador && npm start",
+    "start:all": "concurrently \"cd order-service && npm start\" \"cd menu-service && npm start\" \"cd customer-service && npm start\" \"cd payment-service && npm start\" \"cd payment-ambassador && npm start\"",
     "dev:order": "cd order-service && npm run dev",
     "dev:menu": "cd menu-service && npm run dev",
     "dev:customer": "cd customer-service && npm run dev",
-    "dev:all": "npm-run-all --parallel dev:order dev:menu dev:customer"
+    "dev:payment-service": "cd payment-service && npm run dev",
+    "dev:payment-ambassador": "cd payment-ambassador && npm run dev",
+    "dev:all": "npm-run-all --parallel dev:order dev:menu dev:customer dev:payment-service dev:payment-ambassador"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "nodemon": "^3.1.10",
     "npm-run-all": "^4.1.5"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
-    "node-fetch": "^2.7.0"
+    "jsonwebtoken": "^9.0.3",
+    "node-fetch": "^2.7.0",
+    "redis": "^5.10.0"
   }
 }

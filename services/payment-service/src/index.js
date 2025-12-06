@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/payments', paymentRoutes);
+app.use('/payments', paymentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

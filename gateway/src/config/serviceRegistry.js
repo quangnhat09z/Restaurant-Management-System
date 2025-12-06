@@ -16,6 +16,16 @@ module.exports = {
     url: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3003',
     name: 'Customer Service',
     healthCheck: '/health'
+  },
+  paymentAmbassador: {
+    url: process.env.PAYMENT_AMBASSADOR_URL || 'http://localhost:3004',
+    name: 'Payment Ambassador',
+    healthCheck: '/health'}
+  ,
+  paymentService: {
+    url: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:3005',
+    name: 'Payment Service',
+    healthCheck: '/health'
   }
   
 };
