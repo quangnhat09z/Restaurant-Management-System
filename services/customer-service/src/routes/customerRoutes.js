@@ -43,8 +43,8 @@ router.post('/logout',
 
 router.get(
   '/',
-  // authenticateToken,
-  // authorizeRole('admin'),
+  authenticateToken,
+  authorizeRole('admin'),
   cacheMiddleware(CACHE_DURATION.LIST),
   userController.getAllUsers
 );

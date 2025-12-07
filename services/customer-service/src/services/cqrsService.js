@@ -217,8 +217,6 @@ class CQRSService {
    */
   async syncSingleUser(writeUser) {
     const { userID, password, commandId, ...readableFields } = writeUser;
-
-    // Chỉ lấy các fields có trong user_read
     const allowedFields = {
       userName: readableFields.userName,
       email: readableFields.email,
@@ -231,15 +229,12 @@ class CQRSService {
       updatedAt: readableFields.updatedAt,
       version: readableFields.version,
     };
-
-    // Kiểm tra user đã tồn tại trong read store không
     const [existing] = await pool.query(
       `SELECT userID FROM user_read WHERE userID = ?`,
       [userID]
     );
 
     if (existing.length > 0) {
-      // UPDATE
       const updateFields = Object.keys(allowedFields)
         .map((key) => `${key} = ?`)
         .join(', ');
