@@ -59,8 +59,8 @@ router.get(
 
 router.get(
   '/:id/role',
-  // authenticateToken,
-  // authorizeRole('admin'),
+  authenticateToken,
+  authorizeRole('admin'),
   cacheMiddleware(CACHE_DURATION.ROLE),
   userController.getUserRole
 );
