@@ -1,14 +1,136 @@
-// D:\Restaurant-Management-System\services\payment-ambassador\src\controllers\ambassadorController.js
+// ============================================
+// FILE: services/payment-ambassador/src/controllers/ambassadorController.js
+// ============================================
+
+const axios = require('axios');
+
+// Lấy URL Payment Service từ .env
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
 
 /**
- * Xử lý Webhook khi nhận thông báo thanh toán thành công/thất bại.
+ * Xử lý yêu cầu tạo giao dịch thanh toán từ Gateway
+ * Forward request đến Payment Service với ĐÚNG ENDPOINT
  */
-const axios = require('axios');
+const createPayment = async (req, res, next) => {
+    try {
+        console.log(`✈️ Ambassador forwarding to Payment Service: ${PAYMENT_SERVICE_URL}/api/payments/create`);
+        console.log('📦 Request body:', req.body);
+
+        // 🔧 SỬA: Thêm /api/payments vào URL
+        const response = await axios.post(
+            `${PAYMENT_SERVICE_URL}/api/payments/create`,  // ✅ ĐÚNG ENDPOINT
+            req.body,
+            {
+                timeout: 10000,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        console.log('✅ Payment Service response:', response.status);
+        res.status(response.status).json(response.data);
+
+    } catch (error) {
+        if (error.response) {
+            console.error('❌ Error from Payment Service:', error.response.status, error.response.data);
+            return res.status(error.response.status).json(error.response.data);
+        }
+        
+        console.error('❌ Connection error to Payment Service:', error.message);
+        next(error); 
+    }
+};
+
+/**
+ * Xử lý callback từ Mock Bank
+ * Forward đến Payment Service để update order status
+ */
+const handlePaymentCallback = async (req, res, next) => {
+    try {
+        console.log(`✈️ Ambassador forwarding callback to Payment Service`);
+        console.log('📦 Callback data:', req.body);
+
+        // 🔧 SỬA: Thêm /api/payments vào URL
+        const response = await axios.post(
+            `${PAYMENT_SERVICE_URL}/api/payments/callback`,  // ✅ ĐÚNG ENDPOINT
+            req.body,
+            {
+                timeout: 10000,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        console.log('✅ Callback processed successfully');
+        res.status(response.status).json(response.data);
+
+    } catch (error) {
+        if (error.response) {
+            console.error('❌ Error from Payment Service:', error.response.status, error.response.data);
+            return res.status(error.response.status).json(error.response.data);
+        }
+        
+        console.error('❌ Connection error:', error.message);
+        next(error); 
+    }
+};
+
+/**
+ * Get payment by order ID
+ */
+const getPaymentByOrder = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        console.log(`✈️ Getting payment for order: ${orderId}`);
+
+        const response = await axios.get(
+            `${PAYMENT_SERVICE_URL}/api/payments/order/${orderId}`,  // ✅ ĐÚNG ENDPOINT
+            { timeout: 5000 }
+        );
+        
+        res.status(response.status).json(response.data);
+
+    } catch (error) {
+        if (error.response) {
+            return res.status(error.response.status).json(error.response.data);
+        }
+        console.error('❌ Error:', error.message);
+        next(error);
+    }
+};
+
+/**
+ * Get payment by transaction ID
+ */
+const getPaymentByTransaction = async (req, res, next) => {
+    try {
+        const { transactionId } = req.params;
+        console.log(`✈️ Getting payment for transaction: ${transactionId}`);
+
+        const response = await axios.get(
+            `${PAYMENT_SERVICE_URL}/api/payments/transaction/${transactionId}`,  // ✅ ĐÚNG ENDPOINT
+            { timeout: 5000 }
+        );
+        
+        res.status(response.status).json(response.data);
+
+    } catch (error) {
+        if (error.response) {
+            return res.status(error.response.status).json(error.response.data);
+        }
+        console.error('❌ Error:', error.message);
+        next(error);
+    }
+};
+
+/**
+ * Xử lý Webhook khi nhận thông báo thanh toán (nếu cần)
+ */
 const handlePaymentWebhook = (req, res) => {
     try {
         const paymentData = req.body;
-        
-        // Logic xử lý và xác thực dữ liệu
         console.log('🔔 Webhook received for payment:', paymentData.transactionId);
         
         const { orderId, status } = paymentData;
@@ -20,8 +142,7 @@ const handlePaymentWebhook = (req, res) => {
             });
         }
 
-        // Gọi API/Service để cập nhật trạng thái Order và thông báo real-time
-        console.log(`📡 Cập nhật trạng thái Order ${orderId} thành: ${status}`);
+        console.log(`📡 Update Order ${orderId} status: ${status}`);
         
         return res.status(200).json({ 
             success: true, 
@@ -29,7 +150,7 @@ const handlePaymentWebhook = (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error processing payment webhook:', error.message);
+        console.error('❌ Error processing webhook:', error.message);
         res.status(500).json({ 
             success: false, 
             error: 'Internal Server Error' 
@@ -38,64 +159,35 @@ const handlePaymentWebhook = (req, res) => {
 };
 
 /**
- * Xử lý yêu cầu tạo giao dịch thanh toán từ Frontend (Gateway đã chuyển tiếp).
- * Chuyển tiếp request này đến Payment Service thực sự (cổng 3005).
- * 🆕 THÊM HÀM NÀY ĐỂ FIX LỖI TypeError
- */
-const createPayment = async (req, res, next) => {
-    try {
-        // Lấy URL của Payment Service từ biến môi trường
-        const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
-        
-        console.log(`✈️ Chuyển tiếp yêu cầu tạo thanh toán tới Payment Service: ${PAYMENT_SERVICE_URL}/create`);
-
-        // GỌI API ĐẾN PAYMENT SERVICE (http://localhost:3005/create)
-        const response = await axios.post(`${PAYMENT_SERVICE_URL}/create`, req.body);
-        
-        // Trả về phản hồi nguyên vẹn từ Payment Service cho Gateway/Frontend
-        res.status(response.status).json(response.data);
-
-    } catch (error) {
-        // Xử lý lỗi Axios: Lỗi từ Payment Service sẽ nằm trong error.response
-        if (error.response) {
-            console.error('❌ Lỗi 4xx/5xx từ Payment Service:', error.response.status, error.response.data);
-            // Trả về lỗi của Payment Service (400, 500, v.v.) cho Frontend
-            return res.status(error.response.status).json(error.response.data);
-        }
-        
-        // Xử lý lỗi kết nối chung hoặc lỗi code
-        console.error('❌ Lỗi kết nối đến Payment Service hoặc lỗi code:', error.message);
-        next(error); 
-    }
-};
-
-/**
- * Endpoint này chỉ mô phỏng việc thiết lập kết nối WebSocket.
- */
-const startWebSocketConnection = (req, res) => {
-    console.log("🔗 Client requested WebSocket connection.");
-    
-    res.status(200).json({
-        success: true,
-        message: 'WebSocket handshake simulated. Use ws://... to connect to the WS server.'
-    });
-};
-
-/**
- * Endpoint kiểm tra tình trạng kết nối của Ambassador Service
+ * Health check status
  */
 const getStatus = (req, res) => {
     res.json({
         service: 'Payment Ambassador Service',
         status: 'Operational',
+        target: PAYMENT_SERVICE_URL,
         timestamp: new Date().toISOString()
     });
 };
 
-// Đã sửa lỗi: Export TẤT CẢ các hàm controller được sử dụng trong routes
+/**
+ * WebSocket connection (if needed)
+ */
+const startWebSocketConnection = (req, res) => {
+    console.log("🔗 Client requested WebSocket connection.");
+    res.status(200).json({
+        success: true,
+        message: 'WebSocket handshake simulated'
+    });
+};
+
+// Export all controllers
 module.exports = {
+    createPayment,
+    handlePaymentCallback,
+    getPaymentByOrder,
+    getPaymentByTransaction,
     handlePaymentWebhook,
     getStatus,
-    startWebSocketConnection,
-    createPayment // <--- Đã được thêm vào và export
+    startWebSocketConnection
 };

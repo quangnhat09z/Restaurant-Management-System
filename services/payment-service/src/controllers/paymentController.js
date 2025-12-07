@@ -1,11 +1,7 @@
-// D:\Restaurant-Management-System\services\payment-service\src\controllers\paymentController.js
-
 const paymentService = require('../services/paymentService');
 
 class PaymentController {
-    /**
-     * Xử lý yêu cầu tạo thanh toán. Sử dụng Mock Service để tạo URL QR.
-     */
+    
     async createPayment(req, res, next) {
         try {
             const { OrderID, Amount, PaymentMethod } = req.body;
@@ -16,29 +12,21 @@ class PaymentController {
                     error: 'OrderID and Amount are required'
                 });
             }
-
-            // Gọi đến service mô phỏng
             const payment = await paymentService.createPayment({
                 OrderID,
                 Amount,
                 PaymentMethod
             });
-
-            // Trả về dữ liệu, bao gồm URL thanh toán để Frontend hiển thị QR
             res.status(201).json({
                 success: true,
                 message: 'Payment transaction created (MOCK QR READY)',
                 data: payment,
-                paymentUrl: payment.paymentUrl // <--- Frontend sẽ dùng URL này
+                paymentUrl: payment.paymentUrl 
             });
         } catch (err) {
             next(err);
         }
     }
-
-    /**
-     * Xử lý callback từ ngân hàng (Mocked)
-     */
     async handleCallback(req, res, next) {
         try {
             const { transactionId, status } = req.body;
