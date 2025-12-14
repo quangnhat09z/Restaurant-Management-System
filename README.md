@@ -1,5 +1,11 @@
 
 # Restaurant Management System
+## Author
+| Name                           | MSSV      |
+|--------------------------------|-----------|
+| Trần Chiến Thắng               | 23021725  |
+| Mạch Trần Quang Nhật           | 23021653  |
+| Nguyễn Thành Phước             | 23021665  |
 
 ## Overview
 The Restaurant Management System is a full-stack application designed to manage restaurant operations efficiently. It includes features for handling orders, managing the menu, and processing payments.
